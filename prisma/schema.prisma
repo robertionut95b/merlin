@@ -7,32 +7,79 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Role {
+  id          String       @id
+  name        String
+  description String
+  users       User[]
+  permissions Permission[]
+}
+
+model Permission {
+  id         String  @id
+  objectType String
+  action     String
+  allowed    Boolean
+  Role       Role   @relation(fields: [roleId], references: [id])
+  roleId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
-  id    String @id @default(cuid())
-  email String @unique
+  id       String @id @default(cuid())
+  email    String @unique
+  username String
+  role     Role   @relation(fields: [roleId], references: [id])
+  roleId   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id       String    @id @default(cuid())
+  street   String
+  city     String
+  zip      String
+  country  String
+  Location Location?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Location {
+  id        String  @id @default(cuid())
+  name      String
+  address   Address @relation(fields: [addressId], references: [id])
+  addressId String  @unique
+  theatres Theatre[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Spot {
+  number Int
+  theatre Theatre @relation(fields: [theatreId], references: [id])
+  theatreId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  password Password?
-  notes    Note[]
+  @@id([number, theatreId])
 }
 
-model Password {
-  hash String
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String @unique
-}
-
-model Note {
-  id    String @id @default(cuid())
-  title String
-  body  String
+model Theatre {
+  id String @id @default(cuid())
+  name String
+  location Location @relation(fields: [locationId], references: [id])
+  locationId String
+  capacity Int
+  spots Spot[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String
 }

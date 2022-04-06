@@ -1,0 +1,30 @@
+{
+  "editor.wordWrap": "on",
+  "files.exclude": {
+    "**.next**": true,
+    "**node_modules**": true,
+    "**/*.js": {
+      "when": "$(basename).d.ts"
+    },
+    "**/*.js.map": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true,
+    "**/*.js": {
+      "when": "$(basename).d.ts"
+    },
+    "**/*.js.map": true
+  },
+  "editor.formatOnSave": true,
+  "eslint.alwaysShowStatus": true,
+  // tell the ESLint plugin to run on save
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
