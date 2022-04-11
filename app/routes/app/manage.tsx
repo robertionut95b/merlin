@@ -7,7 +7,7 @@ const ManagementPage = (): JSX.Element => {
   return (
     <>
       <div className="management flex h-full flex-col gap-y-6 md:flex-row">
-        <div className="left-side-menu min-w-full gap-y-2 overflow-auto bg-white p-2 md:min-w-[14rem] md:resize-x">
+        <div className="left-side-menu gap-y-2 bg-white p-2">
           <ManagementMenu options={menuOptions} />
         </div>
         <div className="right-side-content w-full border-l border-l-gray-200 bg-white px-4 pb-2">
@@ -26,9 +26,9 @@ const ManagementPage = (): JSX.Element => {
               not be able to access this section. If you are a manager, you will
               be able to manage the entity's assets.
             </p>
-            <>
+            <div className="mb-4 md:mb-0">
               <Outlet />
-            </>
+            </div>
           </div>
         </div>
       </div>

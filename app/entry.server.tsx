@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { RemixServer } from "remix";
-import type { EntryContext } from "remix";
+import type { EntryContext } from "@remix-run/node";
 import { injectStylesIntoStaticMarkup } from "@mantine/ssr";
 
 export default function handleRequest(
@@ -12,7 +12,6 @@ export default function handleRequest(
   const markup = renderToString(
     <RemixServer context={remixContext} url={request.url} />
   );
-
   responseHeaders.set("Content-Type", "text/html");
 
   return new Response(

@@ -13,6 +13,7 @@ import tailwindStylesheetUrl from "./styles/tailwind.css";
 import { ClerkApp, ClerkCatchBoundary } from "@clerk/remix";
 import globals from "./styles/globals.css";
 import NotFoundPage from "./components/navigation/NotFound";
+import { MantineProvider } from "@mantine/core";
 
 export const links: LinksFunction = () => {
   return [
@@ -47,7 +48,13 @@ const App = (): JSX.Element => {
         <Links />
       </head>
       <body className="h-full">
-        <Outlet />
+        <MantineProvider
+          theme={{
+            primaryColor: "indigo",
+          }}
+        >
+          <Outlet />
+        </MantineProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

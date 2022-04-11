@@ -37,7 +37,7 @@ const NavigationBar = (): JSX.Element => {
 
   return (
     <nav className="bg-gray-200 dark:bg-gray-800">
-      <div className="px-2">
+      <div className="px-3">
         <div className="relative flex h-14 items-center justify-between">
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
             <BurgerButton />

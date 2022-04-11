@@ -7,18 +7,48 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator zod {
+  provider = "zod-prisma"
+  output = "../src/generated/zod"
+}
+
+enum ObjectType {
+  All
+  Address
+  Location
+  Spot
+  Theatre
+  Role
+  Permission
+  User
+  Sales
+}
+
+enum ActionType {
+  All
+  Create
+  Read
+  Update
+  Delete
+}
+
 model Role {
-  id          String       @id
-  name        String
+  id          String       @id @default(cuid())
+  /// @zod.min(8, {message: "Role name must have at least 8 characters"})
+  name        String  @unique
+  /// @zod.min(10, {message: "Role description must have at least 10 characters"})
   description String
   users       User[]
   permissions Permission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Permission {
-  id         String  @id
-  objectType String
-  action     String
+  id         String  @id @default(cuid())
+  objectType ObjectType
+  action     ActionType
   allowed    Boolean
   Role       Role   @relation(fields: [roleId], references: [id])
   roleId    String

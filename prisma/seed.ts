@@ -1,42 +1,86 @@
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { ActionType, ObjectType, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function seed() {
-  const email = "rachel@remix.run";
-
   // cleanup the existing database
-  await prisma.user.delete({ where: { email } }).catch(() => {
+  await prisma.user.deleteMany().catch(() => {
     // no worries if it doesn't exist yet
   });
 
-  const hashedPassword = await bcrypt.hash("racheliscool", 10);
-
-  const user = await prisma.user.create({
+  await prisma.user.create({
     data: {
-      email,
-      password: {
+      email: "admin@localhost.org",
+      username: "admin",
+      role: {
         create: {
-          hash: hashedPassword,
+          name: "Admin",
+          description: "Administrative users",
+          permissions: {
+            create: {
+              action: "All",
+              allowed: true,
+              objectType: ObjectType.All,
+            },
+          },
         },
       },
     },
   });
 
-  await prisma.note.create({
+  await prisma.user.create({
     data: {
-      title: "My first note",
-      body: "Hello, world!",
-      userId: user.id,
+      email: "user@localhost.org",
+      username: "user",
+      role: {
+        create: {
+          name: "Users",
+          description: "Public users",
+          permissions: {
+            create: {
+              action: ActionType.Read,
+              allowed: true,
+              objectType: ObjectType.All,
+            },
+          },
+        },
+      },
     },
   });
 
-  await prisma.note.create({
+  await prisma.role.create({
     data: {
-      title: "My second note",
-      body: "Hello, world!",
-      userId: user.id,
+      name: "Moderators",
+      description: "Moderating team",
+      permissions: {
+        createMany: {
+          data: [
+            {
+              action: ActionType.All,
+              allowed: true,
+              objectType: ObjectType.Location,
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  await prisma.role.create({
+    data: {
+      name: "Front Office Sales",
+      description: "Front Office sales team",
+      permissions: {
+        createMany: {
+          data: [
+            {
+              action: ActionType.All,
+              allowed: true,
+              objectType: ObjectType.Sales,
+            },
+          ],
+        },
+      },
     },
   });
 
