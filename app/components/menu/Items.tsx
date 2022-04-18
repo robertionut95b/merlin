@@ -1,7 +1,10 @@
+import { ObjectType } from "@prisma/client";
+
 export interface IMenuOptionProps {
   name: string;
   icon: JSX.Element;
   url: string;
+  resource: ObjectType;
   minimal?: boolean;
   items?: IMenuOptionProps[];
 }
@@ -35,9 +38,11 @@ export const menuOptions: IMenuOptionProps[] = [
       </>
     ),
     url: "/app/manage",
+    resource: ObjectType.All,
   },
   {
     name: "Locations",
+    resource: ObjectType.Location,
     icon: (
       <>
         <svg
@@ -61,6 +66,7 @@ export const menuOptions: IMenuOptionProps[] = [
     items: [
       {
         name: "Theatres",
+        resource: ObjectType.Location,
         url: "/app/manage/locations/theatres",
         icon: (
           <svg
@@ -108,6 +114,7 @@ export const menuOptions: IMenuOptionProps[] = [
   },
   {
     name: "Sales",
+    resource: ObjectType.Sales,
     url: "#",
     icon: (
       <>
@@ -136,6 +143,7 @@ export const menuOptions: IMenuOptionProps[] = [
     items: [
       {
         name: "Reservations",
+        resource: ObjectType.Sales,
         url: "/app/manage/sales/reservations",
         icon: (
           <>
@@ -190,6 +198,7 @@ export const menuOptions: IMenuOptionProps[] = [
       },
       {
         name: "Invoices",
+        resource: ObjectType.Sales,
         url: "/app/manage/sales/invoices",
         icon: (
           <>
@@ -229,6 +238,7 @@ export const menuOptions: IMenuOptionProps[] = [
       },
       {
         name: "Tickets",
+        resource: ObjectType.Sales,
         url: "/app/manage/sales/tickets",
         icon: (
           <>
@@ -270,6 +280,7 @@ export const menuOptions: IMenuOptionProps[] = [
       },
       {
         name: "Payments",
+        resource: ObjectType.Sales,
         url: "/app/manage/sales/payments",
         icon: (
           <>
@@ -303,6 +314,7 @@ export const menuOptions: IMenuOptionProps[] = [
   },
   {
     name: "Schedule",
+    resource: ObjectType.All,
     url: "#",
     icon: (
       <>
@@ -344,6 +356,7 @@ export const menuOptions: IMenuOptionProps[] = [
     items: [
       {
         name: "Screenings",
+        resource: ObjectType.All,
         url: "/app/manage/schedule/screenings",
         icon: (
           <>
@@ -403,6 +416,7 @@ export const menuOptions: IMenuOptionProps[] = [
       },
       {
         name: "Releases",
+        resource: ObjectType.All,
         url: "/app/manage/schedule/releases",
         icon: (
           <>
@@ -434,6 +448,7 @@ export const menuOptions: IMenuOptionProps[] = [
   },
   {
     name: "Access",
+    resource: ObjectType.All,
     icon: (
       <>
         <svg
@@ -470,6 +485,7 @@ export const menuOptions: IMenuOptionProps[] = [
     items: [
       {
         name: "Permissions",
+        resource: ObjectType.Permission,
         url: "/app/manage/access/permissions",
         icon: (
           <>
@@ -493,6 +509,7 @@ export const menuOptions: IMenuOptionProps[] = [
       },
       {
         name: "Roles",
+        resource: ObjectType.Role,
         url: "/app/manage/access/roles",
         icon: (
           <>
@@ -532,6 +549,7 @@ export const menuOptions: IMenuOptionProps[] = [
       },
       {
         name: "Users",
+        resource: ObjectType.User,
         url: "/app/manage/access/users",
         icon: (
           <>
@@ -563,6 +581,7 @@ export const menuOptions: IMenuOptionProps[] = [
   },
   {
     name: "Settings",
+    resource: ObjectType.All,
     url: "/app/manage/settings",
     icon: (
       <>
@@ -592,6 +611,7 @@ export const menuOptions: IMenuOptionProps[] = [
     items: [
       {
         name: "Internalization",
+        resource: ObjectType.All,
         url: "/app/manage/settings/locales",
         icon: (
           <>
@@ -615,6 +635,7 @@ export const menuOptions: IMenuOptionProps[] = [
       },
       {
         name: "Globals",
+        resource: ObjectType.All,
         url: "/app/manage/settings/globals",
         icon: (
           <>

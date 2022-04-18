@@ -9,13 +9,25 @@ import {
   Outlet,
   Link,
   useLocation,
+  redirect,
 } from "remix";
 import DataAlert from "~/components/layout/DataAlert";
 import Table from "~/components/tables/Table";
 import { getPermissionsWithPagination } from "~/models/permission.server";
 import { Button } from "@mantine/core";
+import { IsAllowedAccess } from "src/helpers/remix.rbac";
 
 export const loader: LoaderFunction = async ({ request }) => {
+  const access = await IsAllowedAccess({
+    request,
+    actions: ["Read", "All"],
+    objects: ["Permission", "All"],
+  });
+
+  if (!access) {
+    return redirect("/app");
+  }
+
   const url = new URL(request.url);
   const queryParams = url.searchParams;
 
@@ -106,13 +118,7 @@ const PermissionsPage = (): JSX.Element => {
       <div className="permissions">
         <div className="table-options mb-4">
           <Link to={pathname + "/new"}>
-            <Button
-              className="text-lg font-extrabold"
-              variant="outline"
-              compact
-            >
-              +
-            </Button>
+            <Button variant="outline">Create</Button>
           </Link>
         </div>
         <Table

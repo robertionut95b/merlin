@@ -72,7 +72,7 @@ const Table = <T,>({
         {pagination && (
           <div className="flex items-center justify-end gap-x-4">
             <span className="font-normal">
-              {data.length * page} items of <b>{pagination.total}</b>
+              {data.length * page} of <b>{pagination.total}</b>
             </span>
             <Pagination
               classNames={{

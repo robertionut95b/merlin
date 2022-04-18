@@ -3,9 +3,9 @@ import { ObjectType, ActionType } from "@prisma/client"
 import { CompleteRole, RelatedRoleModel } from "./index"
 
 export const PermissionModel = z.object({
-  id: z.string(),
+  id: z.string().uuid().optional(),
   objectType: z.nativeEnum(ObjectType),
-  action: z.nativeEnum(ActionType),
+  action: z.nativeEnum(ActionType).array().min(1, { message: "Must have at least one action type" }).or(z.string()),
   allowed: z.boolean(),
   roleId: z.string(),
   createdAt: z.date(),

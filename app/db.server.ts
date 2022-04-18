@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import invariant from "tiny-invariant";
+import { cacheModelByQuery } from "src/prisma/middlewares/cache";
+import { cache } from "src/caching";
 
 let prisma: PrismaClient;
 
@@ -55,6 +57,11 @@ function getClient() {
   });
   // connect eagerly
   client.$connect();
+
+  // express middleware cache queries
+  client.$use(async (params, next) =>
+    cacheModelByQuery("Permission", params, next, cache)
+  );
 
   return client;
 }

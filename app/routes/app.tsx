@@ -12,7 +12,7 @@ export default function Index() {
       <div className="content grow">
         <Outlet />
       </div>
-      <MinimalFooter />
+      {/* <MinimalFooter /> */}
     </main>
   );
 }

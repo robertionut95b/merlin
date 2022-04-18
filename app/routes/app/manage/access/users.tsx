@@ -1,13 +1,30 @@
 import { User } from "@prisma/client";
 import { Column } from "react-table";
-import { LoaderFunction, json, useLoaderData, useNavigate } from "remix";
+import {
+  LoaderFunction,
+  json,
+  useLoaderData,
+  useNavigate,
+  redirect,
+} from "remix";
 import Table from "~/components/tables/Table";
 import { getUsersWithPagination } from "~/models/user.server";
 import parseISO from "date-fns/parseISO";
 import format from "date-fns/format";
 import DataAlert from "~/components/layout/DataAlert";
+import { IsAllowedAccess } from "src/helpers/remix.rbac";
 
 export const loader: LoaderFunction = async ({ request }) => {
+  const access = await IsAllowedAccess({
+    request,
+    actions: ["Read", "All"],
+    objects: ["User", "All"],
+  });
+
+  if (!access) {
+    return redirect("/app");
+  }
+
   const url = new URL(request.url);
   const queryParams = url.searchParams;
 

@@ -33,12 +33,15 @@ enum ActionType {
 }
 
 model Role {
+  /// @zod.uuid().optional()
   id          String       @id @default(cuid())
-  /// @zod.min(8, {message: "Role name must have at least 8 characters"})
+  /// @zod.min(5, {message: "Role name must have at least 5 characters"})
   name        String  @unique
   /// @zod.min(10, {message: "Role description must have at least 10 characters"})
   description String
+  /// @zod.optional()
   users       User[]
+  /// @zod.optional()
   permissions Permission[]
 
   createdAt DateTime @default(now())
@@ -46,15 +49,20 @@ model Role {
 }
 
 model Permission {
+  /// @zod.uuid().optional()
   id         String  @id @default(cuid())
   objectType ObjectType
+  /// @zod.array().min(1, {message: "Must have at least one action type"}).or(z.string())
   action     ActionType
   allowed    Boolean
+  // @zod.optional()
   Role       Role   @relation(fields: [roleId], references: [id])
   roleId    String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([objectType, action])
 }
 
 model User {

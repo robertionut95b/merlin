@@ -73,7 +73,6 @@ const ManagementMenu = ({
             className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-300 bg-gray-200 text-center"
             onClick={() => setCollapsed(!collapsed)}
           >
-            Menu
             {!collapsed ? (
               <svg
                 width="24"

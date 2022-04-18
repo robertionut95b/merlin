@@ -1,7 +1,6 @@
 import { Button, MultiSelect, TextInput } from "@mantine/core";
 import { useForm, zodResolver } from "@mantine/form";
 import { User } from "@prisma/client";
-import { CatchValue } from "@remix-run/react/transition";
 import { useEffect } from "react";
 import {
   ActionFunction,
@@ -15,21 +14,41 @@ import {
   useTransition,
 } from "remix";
 import { RelatedRoleModel } from "src/generated/zod";
-import { z } from "zod";
 import InputAlert from "~/components/layout/InputAlert";
 import { getUsers } from "~/models/user.server";
-import { validateCreateRole } from "../../../../../../models/role.server";
+import { validateCreateRole } from "~/models/role.server";
+import { IsAllowedAccess } from "src/helpers/remix.rbac";
 
 export const action: ActionFunction = async ({ request }): Promise<any> => {
+  const access = await IsAllowedAccess({
+    request,
+    actions: ["Create", "All"],
+    objects: ["Role", "All"],
+  });
+
+  if (!access) {
+    throw new Response("Unauthorized", { status: 401 });
+  }
+
   const formData = await request.formData();
   // @ts-expect-error("type error")
   const values: {
     name: string;
     description: string;
+    users: User["email"];
+    createdAt: Date;
+    updatedAt: Date;
   } = Object.fromEntries(formData);
 
+  const sanitizedValues = {
+    ...values,
+    users: [values.users],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
   // @ts-expect-error("type error")
-  const { success, error } = validateCreateRole(values);
+  const { success, error } = validateCreateRole(sanitizedValues);
 
   const issues = error.format();
 
@@ -40,7 +59,17 @@ export const action: ActionFunction = async ({ request }): Promise<any> => {
   return redirect("app/manage/access/roles");
 };
 
-export const loader: LoaderFunction = async () => {
+export const loader: LoaderFunction = async ({ request }) => {
+  const access = await IsAllowedAccess({
+    request,
+    actions: ["Read", "All"],
+    objects: ["Role", "All"],
+  });
+
+  if (!access) {
+    return redirect("/app");
+  }
+
   const users = await getUsers();
   return json({
     users,
@@ -62,7 +91,8 @@ const NewRolePage = (): JSX.Element => {
       name: "",
       description: "",
       users: [],
-      permissions: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 
@@ -106,10 +136,22 @@ const NewRolePage = (): JSX.Element => {
             name="users"
             {...form.getInputProps("users")}
           />
-          <p className="mt-1 text-sm italic">
+          <p className="mt-2 text-xs italic">
             You can add the users later as well
           </p>
         </div>
+        <input
+          hidden
+          type="datetime-local"
+          name="createdAt"
+          {...form.getInputProps("createdAt")}
+        />
+        <input
+          hidden
+          type="datetime-local"
+          name="updatedAt"
+          {...form.getInputProps("updatedAt")}
+        />
         <Button
           className={"place-self-start"}
           type={"submit"}

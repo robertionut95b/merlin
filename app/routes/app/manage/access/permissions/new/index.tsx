@@ -1,65 +1,104 @@
-import { Button, Checkbox, Select } from "@mantine/core";
+import { Button, Checkbox, MultiSelect, Select } from "@mantine/core";
 import { useForm, zodResolver } from "@mantine/form";
-import { ActionType, ObjectType, Role } from "@prisma/client";
-import { useEffect } from "react";
+import { ActionType, ObjectType, Prisma, Role } from "@prisma/client";
 import {
   ActionFunction,
   Form,
   json,
   LoaderFunction,
   redirect,
-  useActionData,
+  useCatch,
   useLoaderData,
+  useSubmit,
   useTransition,
 } from "remix";
-import { RelatedPermissionModel } from "src/generated/zod";
-import { isAdding } from "src/helpers/remix";
+import { PermissionModel } from "src/generated/zod";
+import { IsAllowedAccess } from "src/helpers/remix.rbac";
 import DataAlert from "~/components/layout/DataAlert";
-import { createPermission } from "~/models/permission.server";
+import {
+  createManyPermissions,
+  validateCreatePermissions,
+  validateHigherPermission,
+} from "~/models/permission.server";
 import { getRoles } from "~/models/role.server";
-import { validateCreatePermission } from "../../../../../../models/permission.server";
+import { FormEvent } from "react";
+import { showNotification } from "@mantine/notifications";
 
 export const action: ActionFunction = async ({ request }): Promise<any> => {
+  const access = await IsAllowedAccess({
+    request,
+    actions: ["Create", "All"],
+    objects: ["Permission", "All"],
+  });
+
+  if (!access) {
+    throw new Response("Unauthorized", { status: 401 });
+  }
+
   const formData = await request.formData();
   // @ts-expect-error("type error")
   const values: {
     objectType: ObjectType;
-    action: ActionType;
-    role: string;
+    action: ActionType[];
+    roleId: string;
     allowed: string;
+    createdAt: string;
+    updatedAt: string;
   } = Object.fromEntries(formData);
 
-  const sanitizedValues = { ...values, allow: values.allowed === "true" };
+  const actions = values.action.toString().split(",");
+  const prismaInput = actions.map((ac) => ({
+    action: ActionType[ac as keyof typeof ActionType],
+    allowed: values.allowed === "true",
+    objectType: ObjectType[values.objectType as keyof typeof ObjectType],
+    roleId: values.roleId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }));
 
+  const perms = validateCreatePermissions({ data: prismaInput });
   // @ts-expect-error("type error")
-  const { success, error } = validateCreatePermission(sanitizedValues);
-  const issues = error.format();
-
-  if (success === false) {
-    return json({ errors: issues });
+  if (!perms.reduce((acc, curr) => acc.success || curr.success, false)) {
+    throw new Response("Invalid data", { status: 400 });
   }
 
-  const perm = await createPermission({
-    data: {
-      action: values.action,
-      allowed: values.allowed === "true",
-      objectType: values.objectType,
-      Role: {
-        connect: {
-          name: values.role,
-        },
-      },
-    },
-  });
+  const higherPerm = await validateHigherPermission(
+    values.roleId,
+    values.objectType
+  );
+  if (higherPerm) {
+    throw new Response("Higher level permission already exists", {
+      status: 400,
+    });
+  }
 
-  if (!perm) {
-    return json({ errors: {} });
+  try {
+    await createManyPermissions({
+      data: prismaInput,
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e?.code === "P2002") {
+        throw new Response("Permission already exists", { status: 400 });
+      }
+    }
+    throw e;
   }
 
   return redirect("app/manage/access/permissions");
 };
 
-export const loader: LoaderFunction = async () => {
+export const loader: LoaderFunction = async ({ request }) => {
+  const access = await IsAllowedAccess({
+    request,
+    actions: ["Create", "All"],
+    objects: ["Permission", "All"],
+  });
+
+  if (!access) {
+    return redirect("/app");
+  }
+
   const roles = await getRoles();
   const objectTypes: string[] = Object.keys(ObjectType);
   const actionTypes: string[] = Object.keys(ActionType);
@@ -81,37 +120,33 @@ const PermissionsNewPage = (): JSX.Element => {
   const selectActionTypes = actionTypes.map((at) => ({ value: at, label: at }));
 
   const transition = useTransition();
-  const actionData = useActionData();
+  const submit = useSubmit();
 
   const form = useForm({
-    schema: zodResolver(RelatedPermissionModel),
+    schema: zodResolver(PermissionModel),
     initialValues: {
       objectType: "",
-      action: "",
-      allowed: false,
-      role: "",
+      action: [],
+      allowed: true,
+      roleId: "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 
-  useEffect(() => {
-    // const create = isAdding(transition);
-    // if (!create) {
-    //   form.reset();
-    // }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transition]);
+  const handleSubmitHandler = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    form.validate();
 
-  useEffect(() => {
-    if (actionData?.errors) {
-      form.setErrors({
-        action: actionData?.errors?.action?._errors?.[0],
-        objectType: actionData?.errors?.objectType?._errors?.[0],
-        role: actionData?.errors?.roleId?._errors?.[0],
-        allowed: actionData?.errors?.allowed?._errors?.[0],
-      });
+    if (Object.keys(form.errors).length > 0) {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionData]);
+    const formData = new FormData(e.target as HTMLFormElement);
+    formData.set("roleId", form.values.roleId);
+    formData.set("action", form.values.action.join(","));
+
+    submit(formData, { replace: true, method: "post" });
+  };
 
   return (
     <div className="new-perm">
@@ -121,7 +156,21 @@ const PermissionsNewPage = (): JSX.Element => {
       <div className="sub-heading mb-2">
         <p>Create a new permission rule</p>
       </div>
-      <Form method={"post"} className="flex flex-col gap-y-4">
+      <Form
+        method={"post"}
+        className="flex flex-col gap-y-4"
+        onSubmit={(e) => {
+          handleSubmitHandler(e);
+        }}
+      >
+        <Select
+          required
+          name="roleId"
+          data={selectRoles}
+          label="Role"
+          placeholder="Admin"
+          {...form.getInputProps("roleId")}
+        />
         <Select
           required
           name="objectType"
@@ -130,15 +179,7 @@ const PermissionsNewPage = (): JSX.Element => {
           placeholder="Locations"
           {...form.getInputProps("objectType")}
         />
-        <Select
-          required
-          name="role"
-          data={selectRoles}
-          label="Role"
-          placeholder="Admin"
-          {...form.getInputProps("role")}
-        />
-        <Select
+        <MultiSelect
           required
           name="action"
           data={selectActionTypes}
@@ -147,12 +188,23 @@ const PermissionsNewPage = (): JSX.Element => {
           {...form.getInputProps("action")}
         />
         <Checkbox
-          required
           placeholder="Allowed"
           label="Allowed"
           color={"violet"}
           name="allowed"
           {...form.getInputProps("allowed")}
+        />
+        <input
+          hidden
+          type="datetime-local"
+          name="createdAt"
+          {...form.getInputProps("createdAt")}
+        />
+        <input
+          hidden
+          type="datetime-local"
+          name="updatedAt"
+          {...form.getInputProps("updatedAt")}
         />
         <Button
           className={"place-self-start"}
@@ -168,8 +220,24 @@ const PermissionsNewPage = (): JSX.Element => {
   );
 };
 
+export function CatchBoundary() {
+  const caught = useCatch();
+
+  if (caught.status === 400) {
+    showNotification({
+      title: "Invalid input",
+      message: caught.data,
+      autoClose: 3000,
+    });
+  }
+
+  return <PermissionsNewPage />;
+}
+
 export function ErrorBoundary(): JSX.Element {
-  return <DataAlert message="Invalid data input" />;
+  return (
+    <DataAlert message="There is something wrong on our end ... We are working on it!" />
+  );
 }
 
 export default PermissionsNewPage;

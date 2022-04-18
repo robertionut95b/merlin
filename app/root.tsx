@@ -11,15 +11,13 @@ import type { LinksFunction, MetaFunction, LoaderFunction } from "remix";
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import { ClerkApp, ClerkCatchBoundary } from "@clerk/remix";
-import globals from "./styles/globals.css";
 import NotFoundPage from "./components/navigation/NotFound";
 import { MantineProvider } from "@mantine/core";
+import AccessUnauthorizedPage from "./components/navigation/AccessUnauthorized";
+import { NotificationsProvider } from "@mantine/notifications";
 
 export const links: LinksFunction = () => {
-  return [
-    { rel: "stylesheet", href: tailwindStylesheetUrl },
-    { rel: "stylesheet", href: globals },
-  ];
+  return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
 };
 
 export const meta: MetaFunction = () => ({
@@ -29,15 +27,7 @@ export const meta: MetaFunction = () => ({
 });
 
 export const loader: LoaderFunction = (args) => {
-  return rootAuthLoader(
-    args,
-    ({ request }) => {
-      // const { userId } = request.auth;
-      // fetch data
-      return { yourData: "here" };
-    },
-    { loadUser: true }
-  );
+  return rootAuthLoader(args, { loadUser: true });
 };
 
 const App = (): JSX.Element => {
@@ -53,11 +43,13 @@ const App = (): JSX.Element => {
             primaryColor: "indigo",
           }}
         >
-          <Outlet />
+          <NotificationsProvider>
+            <Outlet />
+          </NotificationsProvider>
         </MantineProvider>
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
+        {process.env.NODE_ENV === "development" && <LiveReload />}
       </body>
     </html>
   );
@@ -77,6 +69,18 @@ function AppCatchBoundary() {
         </head>
         <body>
           <NotFoundPage />
+        </body>
+      </html>
+    );
+  } else if (caught.status === 401) {
+    return (
+      <html>
+        <head>
+          <Meta />
+          <Links />
+        </head>
+        <body>
+          <AccessUnauthorizedPage />
         </body>
       </html>
     );

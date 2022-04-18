@@ -2,13 +2,31 @@ import { Role } from "@prisma/client";
 import { Column } from "react-table";
 import parseISO from "date-fns/parseISO";
 import format from "date-fns/format";
-import { LoaderFunction, json, useLoaderData, Link, useLocation } from "remix";
+import {
+  LoaderFunction,
+  json,
+  useLoaderData,
+  Link,
+  useLocation,
+  redirect,
+} from "remix";
 import Table from "~/components/tables/Table";
 import { getRoles } from "~/models/role.server";
 import DataAlert from "~/components/layout/DataAlert";
 import { Button } from "@mantine/core";
+import { IsAllowedAccess } from "src/helpers/remix.rbac";
 
-export const loader: LoaderFunction = async () => {
+export const loader: LoaderFunction = async ({ request }) => {
+  const access = await IsAllowedAccess({
+    request,
+    actions: ["Read", "All"],
+    objects: ["Role", "All"],
+  });
+
+  if (!access) {
+    return redirect("/app");
+  }
+
   return json(await getRoles());
 };
 
@@ -45,16 +63,17 @@ export const RolesPage = (): JSX.Element => {
       <div className="header">
         <h3 className="mb-2 text-xl font-bold">Roles</h3>
       </div>
+      <div className="content-description">
+        <p>
+          This section allows you to create custom groups containing an infinite
+          number of users.
+        </p>
+        <br />
+      </div>
       <div className="roles">
         <div className="table-options mb-4">
           <Link to={pathname + "/new"}>
-            <Button
-              className="text-lg font-extrabold"
-              variant="outline"
-              compact
-            >
-              +
-            </Button>
+            <Button variant="outline">Create</Button>
           </Link>
         </div>
         <Table

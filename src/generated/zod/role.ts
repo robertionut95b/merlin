@@ -2,8 +2,8 @@ import * as z from "zod"
 import { CompleteUser, RelatedUserModel, CompletePermission, RelatedPermissionModel } from "./index"
 
 export const RoleModel = z.object({
-  id: z.string(),
-  name: z.string().min(8, { message: "Role name must have at least 8 characters" }),
+  id: z.string().uuid().optional(),
+  name: z.string().min(5, { message: "Role name must have at least 5 characters" }),
   description: z.string().min(10, { message: "Role description must have at least 10 characters" }),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -20,6 +20,6 @@ export interface CompleteRole extends z.infer<typeof RoleModel> {
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
 export const RelatedRoleModel: z.ZodSchema<CompleteRole> = z.lazy(() => RoleModel.extend({
-  users: RelatedUserModel.array(),
-  permissions: RelatedPermissionModel.array(),
+  users: RelatedUserModel.array().optional(),
+  permissions: RelatedPermissionModel.array().optional(),
 }))
