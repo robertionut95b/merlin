@@ -1,4 +1,4 @@
-import { LoaderFunction, redirect } from "remix";
+import { LoaderFunction, redirect } from "@remix-run/node";
 import { IsAllowedAccess } from "src/helpers/remix.rbac";
 
 const AccessPage = (): JSX.Element => {

@@ -1,20 +1,21 @@
-import { Role } from "@prisma/client";
-import { Column } from "react-table";
-import parseISO from "date-fns/parseISO";
+import { useModals } from "@mantine/modals";
+import type { Role } from "@prisma/client";
+import type { LoaderFunction } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
+import { useLoaderData, useLocation, useNavigate } from "@remix-run/react";
 import format from "date-fns/format";
-import {
-  LoaderFunction,
-  json,
-  useLoaderData,
-  Link,
-  useLocation,
-  redirect,
-} from "remix";
-import Table from "~/components/tables/Table";
-import { getRoles } from "~/models/role.server";
-import DataAlert from "~/components/layout/DataAlert";
-import { Button } from "@mantine/core";
+import parseISO from "date-fns/parseISO";
+import type { Column } from "react-table";
 import { IsAllowedAccess } from "src/helpers/remix.rbac";
+import {
+  mapFiltersToQueryParams,
+  mapQueryParamsToFilters,
+} from "src/remix/remix-routes";
+import DataAlert from "~/components/layout/DataAlert";
+import { DateTimeColumnFilter } from "~/components/tables/filters";
+import Table from "~/components/tables/Table";
+import { getRolesWithPagination } from "~/models/role.server";
+import { getStartedAtEndAtDates } from "../../../../../../src/remix/dates";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const access = await IsAllowedAccess({
@@ -27,11 +28,61 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect("/app");
   }
 
-  return json(await getRoles());
+  const url = new URL(request.url);
+  const queryParams = url.searchParams;
+  const [createdAtStart, endAtStart] = getStartedAtEndAtDates(
+    queryParams.get("createdAt")
+  );
+  const [updatedAtStart, updatedEndAtStart] = getStartedAtEndAtDates(
+    queryParams.get("updatedAt")
+  );
+
+  const pageSize = 10;
+  const page = parseInt(queryParams.get("p") || "0");
+  const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
+  const { paginationMeta, roles } = await getRolesWithPagination({
+    take: pageSize,
+    skip,
+    where: {
+      id: {
+        contains: queryParams.get("id") || undefined,
+        mode: "insensitive",
+      },
+      name: {
+        contains: queryParams.get("name") || undefined,
+        mode: "insensitive",
+      },
+      description: {
+        contains: queryParams.get("description") || undefined,
+        mode: "insensitive",
+      },
+      createdAt: {
+        gte: createdAtStart,
+        lt: endAtStart,
+      },
+      updatedAt: {
+        gte: updatedAtStart,
+        lt: updatedEndAtStart,
+      },
+    },
+  });
+  const pageCount = Math.ceil(paginationMeta.total / pageSize);
+
+  return json({
+    roles,
+    total: paginationMeta.total,
+    pageSize,
+    pageCount,
+  });
 };
 
 export const RolesPage = (): JSX.Element => {
-  const roles = useLoaderData<Role[]>();
+  const { pageCount, pageSize, roles, total } = useLoaderData<{
+    roles: Role[];
+    total: number;
+    pageSize: number;
+    pageCount: number;
+  }>();
   const rolesColumns: Column[] = [
     {
       Header: "Id",
@@ -49,14 +100,23 @@ export const RolesPage = (): JSX.Element => {
       Header: "Created",
       accessor: "createdAt",
       Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+      // @ts-expect-error("react-table-types")
+      Filter: DateTimeColumnFilter,
+      filter: "dateEquals",
     },
     {
       Header: "Updated",
       accessor: "updatedAt",
       Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+      // @ts-expect-error("react-table-types")
+      Filter: DateTimeColumnFilter,
+      filter: "dateEquals",
     },
   ];
-  const { pathname } = useLocation();
+
+  const { pathname, search } = useLocation();
+  const navigate = useNavigate();
+  const modals = useModals();
 
   return (
     <>
@@ -71,15 +131,66 @@ export const RolesPage = (): JSX.Element => {
         <br />
       </div>
       <div className="roles">
-        <div className="table-options mb-4">
-          <Link to={pathname + "/new"}>
-            <Button variant="outline">Create</Button>
-          </Link>
-        </div>
         <Table
           className="rounded-lg border border-gray-200"
           columns={rolesColumns}
           data={roles}
+          manipulation={{
+            onCreate: () => navigate(`${pathname}/new`, { replace: true }),
+            onFilters: (filters, _globalFilter) =>
+              navigate(mapFiltersToQueryParams(pathname, filters), {
+                replace: true,
+              }),
+            defaultFilters: mapQueryParamsToFilters(search),
+            clearFilters: () => navigate(pathname, { replace: true }),
+          }}
+          pagination={{
+            initialPage: parseInt(new URLSearchParams(search).get("p") || "1"),
+            pageSize,
+            pageCount,
+            total,
+            onPageChange: (page: number) => navigate(`?p=${page}`),
+          }}
+          selection={{
+            onView: (row) => navigate(`/app/manage/access/roles/${row.id}`),
+            onEdit: (row) =>
+              navigate(`/app/manage/access/roles/${row.id}/edit`),
+            onDelete: (row) =>
+              modals.openConfirmModal({
+                title: "Delete Role",
+                centered: true,
+                confirmProps: {
+                  variant: "light",
+                  color: "red",
+                },
+                children: (
+                  <span className="my-2 text-sm">
+                    Are you sure you want to delete the role{" "}
+                    <b className="text-red-700">{row.name}</b> ?
+                  </span>
+                ),
+                labels: { confirm: "Confirm", cancel: "Cancel" },
+                onCancel: () => null,
+                onConfirm: () => null,
+              }),
+            onDeleteMany: (_rows) =>
+              modals.openConfirmModal({
+                title: "Delete Roles",
+                centered: true,
+                confirmProps: {
+                  variant: "light",
+                  color: "red",
+                },
+                children: (
+                  <span className="my-2 text-sm">
+                    Are you sure you want to delete the selected entries?
+                  </span>
+                ),
+                labels: { confirm: "Confirm", cancel: "Cancel" },
+                onCancel: () => null,
+                onConfirm: () => null,
+              }),
+          }}
         />
       </div>
     </>
@@ -87,7 +198,7 @@ export const RolesPage = (): JSX.Element => {
 };
 
 export function ErrorBoundary(): JSX.Element {
-  return <DataAlert message="Could not load roles data" />;
+  return <DataAlert message="Could not load Roles data" />;
 }
 
 export default RolesPage;

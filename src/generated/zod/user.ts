@@ -2,12 +2,12 @@ import * as z from "zod"
 import { CompleteRole, RelatedRoleModel } from "./index"
 
 export const UserModel = z.object({
-  id: z.string(),
+  id: z.string().uuid().optional(),
   email: z.string(),
   username: z.string(),
   roleId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 })
 
 export interface CompleteUser extends z.infer<typeof UserModel> {

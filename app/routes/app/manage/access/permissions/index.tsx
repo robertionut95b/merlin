@@ -1,21 +1,23 @@
-import { Permission } from "@prisma/client";
-import { format, parseISO } from "date-fns";
-import { Column } from "react-table";
+import type { Permission } from "@prisma/client";
+import { ActionType } from "@prisma/client";
+import type { LoaderFunction } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
-  json,
-  LoaderFunction,
-  useLoaderData,
-  useNavigate,
   Outlet,
-  Link,
+  useLoaderData,
   useLocation,
-  redirect,
-} from "remix";
+  useNavigate,
+} from "@remix-run/react";
+import { format, parseISO } from "date-fns";
+import type { Column } from "react-table";
+import { IsAllowedAccess } from "src/helpers/remix.rbac";
+import {
+  mapFiltersToQueryParams,
+  mapQueryParamsToFilters,
+} from "src/remix/remix-routes";
 import DataAlert from "~/components/layout/DataAlert";
 import Table from "~/components/tables/Table";
 import { getPermissionsWithPagination } from "~/models/permission.server";
-import { Button } from "@mantine/core";
-import { IsAllowedAccess } from "src/helpers/remix.rbac";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const access = await IsAllowedAccess({
@@ -31,6 +33,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const queryParams = url.searchParams;
 
+  const actionTypeFilter =
+    ActionType[(queryParams.get("action") || "") as keyof typeof ActionType] ||
+    undefined;
+
   const pageSize = 10;
   const page = parseInt(queryParams.get("p") || "0");
   const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
@@ -41,6 +47,15 @@ export const loader: LoaderFunction = async ({ request }) => {
       Role: {
         select: {
           name: true,
+        },
+      },
+    },
+    where: {
+      action: actionTypeFilter,
+      Role: {
+        name: {
+          contains: queryParams.get("Role.name") || undefined,
+          mode: "insensitive",
         },
       },
     },
@@ -101,7 +116,7 @@ const PermissionsPage = (): JSX.Element => {
   ];
 
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   return (
     <>
@@ -116,20 +131,26 @@ const PermissionsPage = (): JSX.Element => {
         <br />
       </div>
       <div className="permissions">
-        <div className="table-options mb-4">
-          <Link to={pathname + "/new"}>
-            <Button variant="outline">Create</Button>
-          </Link>
-        </div>
         <Table
           className="rounded-lg border border-gray-200"
           columns={permsColumns}
           data={permissions}
           pagination={{
+            initialPage: parseInt(new URLSearchParams(search).get("p") || "1"),
             pageSize,
             pageCount,
             total,
-            onPageChange: (page: number) => navigate(`?p=${page}`),
+            onPageChange: (page: number) => navigate(`?&p=${page}`),
+          }}
+          manipulation={{
+            onCreate: () => navigate(`${pathname}/new`, { replace: true }),
+            onFilters: (filters, _globalFilter) => {
+              return navigate(mapFiltersToQueryParams(pathname, filters), {
+                replace: true,
+              });
+            },
+            defaultFilters: mapQueryParamsToFilters(search),
+            clearFilters: () => navigate(pathname, { replace: true }),
           }}
         />
       </div>

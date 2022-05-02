@@ -1,7 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import invariant from "tiny-invariant";
-import { cacheModelByQuery } from "src/prisma/middlewares/cache";
-import { cache } from "src/caching";
 
 let prisma: PrismaClient;
 
@@ -59,9 +57,19 @@ function getClient() {
   client.$connect();
 
   // express middleware cache queries
-  client.$use(async (params, next) =>
-    cacheModelByQuery("Permission", params, next, cache)
-  );
+  // client.$use(async (params, next) =>
+  //   cacheModelByQuery("Permission", params, next, cache)
+  // );
+
+  client.$use(async (params, next) => {
+    const before = Date.now();
+    const result = await next(params);
+    const after = Date.now();
+    console.log(
+      `Query ${params.model}.${params.action} took ${after - before}ms`
+    );
+    return result;
+  });
 
   return client;
 }

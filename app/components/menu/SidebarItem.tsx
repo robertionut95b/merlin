@@ -1,8 +1,8 @@
 import { Tooltip } from "@mantine/core";
-import { NavLink, useLocation } from "remix";
-import { IMenuOptionProps } from "./Items";
+import { NavLink, useLocation } from "@remix-run/react";
+import type { IMenuOptionProps } from "./Items";
 
-const ManagementMenuItem = ({
+const SidebarItem = ({
   name,
   icon,
   url,
@@ -33,7 +33,7 @@ const ManagementMenuItem = ({
         </NavLink>
         {items &&
           items?.map((item, idx) => (
-            <ManagementMenuItem key={idx} minimal={minimal} {...item} />
+            <SidebarItem key={idx} minimal={minimal} {...item} />
           ))}
       </>
     );
@@ -58,7 +58,7 @@ const ManagementMenuItem = ({
             <div className="separator ml-5 w-0.5 bg-gray-700">{` `}</div>
             <div className="menu-item-children ml-4 w-full">
               {items?.map((item, idx) => (
-                <ManagementMenuItem key={idx} {...item} />
+                <SidebarItem key={idx} {...item} />
               ))}
             </div>
           </div>
@@ -67,4 +67,4 @@ const ManagementMenuItem = ({
     );
 };
 
-export default ManagementMenuItem;
+export default SidebarItem;

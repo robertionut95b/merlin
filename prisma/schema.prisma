@@ -39,12 +39,12 @@ model Role {
   name        String  @unique
   /// @zod.min(10, {message: "Role description must have at least 10 characters"})
   description String
-  /// @zod.optional()
   users       User[]
-  /// @zod.optional()
   permissions Permission[]
 
+  /// @zod.optional() 
   createdAt DateTime @default(now())
+  /// @zod.optional()
   updatedAt DateTime @updatedAt
 }
 
@@ -59,21 +59,26 @@ model Permission {
   Role       Role   @relation(fields: [roleId], references: [id])
   roleId    String
 
+  /// @zod.optional()
   createdAt DateTime @default(now())
+  /// @zod.optional()
   updatedAt DateTime @updatedAt
 
   @@unique([objectType, action])
 }
 
 model User {
+  /// @zod.uuid().optional()
   id       String @id @default(cuid())
   email    String @unique
   username String
   role     Role   @relation(fields: [roleId], references: [id])
   roleId   String
 
+  /// @zod.optional()
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  /// @zod.optional()
+  updatedAt  DateTime @updatedAt
 }
 
 model Address {

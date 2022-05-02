@@ -1,17 +1,16 @@
 import { Button, Checkbox, MultiSelect, Select } from "@mantine/core";
 import { useForm, zodResolver } from "@mantine/form";
-import { ActionType, ObjectType, Prisma, Role } from "@prisma/client";
+import type { Role } from "@prisma/client";
+import { ActionType, ObjectType, Prisma } from "@prisma/client";
+import type { ActionFunction, LoaderFunction } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
-  ActionFunction,
   Form,
-  json,
-  LoaderFunction,
-  redirect,
   useCatch,
   useLoaderData,
   useSubmit,
   useTransition,
-} from "remix";
+} from "@remix-run/react";
 import { PermissionModel } from "src/generated/zod";
 import { IsAllowedAccess } from "src/helpers/remix.rbac";
 import DataAlert from "~/components/layout/DataAlert";
@@ -21,7 +20,7 @@ import {
   validateHigherPermission,
 } from "~/models/permission.server";
 import { getRoles } from "~/models/role.server";
-import { FormEvent } from "react";
+import type { FormEvent } from "react";
 import { showNotification } from "@mantine/notifications";
 
 export const action: ActionFunction = async ({ request }): Promise<any> => {
@@ -196,20 +195,20 @@ const PermissionsNewPage = (): JSX.Element => {
         />
         <input
           hidden
-          type="datetime-local"
+          type="date"
           name="createdAt"
           {...form.getInputProps("createdAt")}
         />
         <input
           hidden
-          type="datetime-local"
+          type="date"
           name="updatedAt"
           {...form.getInputProps("updatedAt")}
         />
         <Button
           className={"place-self-start"}
           type={"submit"}
-          variant="white"
+          variant="outline"
           color="violet"
           loading={transition.state === "submitting"}
         >

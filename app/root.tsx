@@ -1,3 +1,8 @@
+import type {
+  LinksFunction,
+  LoaderFunction,
+  MetaFunction,
+} from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -6,8 +11,7 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
-} from "remix";
-import type { LinksFunction, MetaFunction, LoaderFunction } from "remix";
+} from "@remix-run/react";
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import { ClerkApp, ClerkCatchBoundary } from "@clerk/remix";
@@ -15,6 +19,7 @@ import NotFoundPage from "./components/navigation/NotFound";
 import { MantineProvider } from "@mantine/core";
 import AccessUnauthorizedPage from "./components/navigation/AccessUnauthorized";
 import { NotificationsProvider } from "@mantine/notifications";
+import { ModalsProvider } from "@mantine/modals";
 
 export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
@@ -41,11 +46,14 @@ const App = (): JSX.Element => {
         <MantineProvider
           theme={{
             primaryColor: "indigo",
+            fontFamily: "inherit",
           }}
         >
-          <NotificationsProvider>
-            <Outlet />
-          </NotificationsProvider>
+          <ModalsProvider>
+            <NotificationsProvider>
+              <Outlet />
+            </NotificationsProvider>
+          </ModalsProvider>
         </MantineProvider>
         <ScrollRestoration />
         <Scripts />

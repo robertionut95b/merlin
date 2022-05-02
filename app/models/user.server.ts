@@ -37,3 +37,9 @@ export async function getUsersWithPagination(
     },
   };
 }
+
+export async function createUser(
+  opts: Parameters<PrismaClient["user"]["create"]>[number]
+): Promise<ReturnType<typeof prisma.user.create>> {
+  return prisma.user.create({ ...opts });
+}

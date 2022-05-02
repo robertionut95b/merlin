@@ -1,18 +1,20 @@
-import { User } from "@prisma/client";
-import { Column } from "react-table";
+import { Button } from "@mantine/core";
+import type { User } from "@prisma/client";
+import type { LoaderFunction } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
-  LoaderFunction,
-  json,
+  Link,
   useLoaderData,
+  useLocation,
   useNavigate,
-  redirect,
-} from "remix";
+} from "@remix-run/react";
+import format from "date-fns/format";
+import parseISO from "date-fns/parseISO";
+import type { Column } from "react-table";
+import { IsAllowedAccess } from "src/helpers/remix.rbac";
+import DataAlert from "~/components/layout/DataAlert";
 import Table from "~/components/tables/Table";
 import { getUsersWithPagination } from "~/models/user.server";
-import parseISO from "date-fns/parseISO";
-import format from "date-fns/format";
-import DataAlert from "~/components/layout/DataAlert";
-import { IsAllowedAccess } from "src/helpers/remix.rbac";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const access = await IsAllowedAccess({
@@ -78,18 +80,32 @@ export const UsersPage = (): JSX.Element => {
   ];
 
   const navigate = useNavigate();
+  const { pathname, search } = useLocation();
 
   return (
     <>
       <div className="header">
         <h3 className="mb-2 text-xl font-bold">Users</h3>
       </div>
+      <div className="content-description">
+        <p>
+          This section allows you to create custom defined users, if they do not
+          login via OAuth provided by Clerk.
+        </p>
+        <br />
+      </div>
       <div className="users">
+        <div className="table-options mb-4">
+          <Link to={pathname + "/new"}>
+            <Button variant="outline">Create</Button>
+          </Link>
+        </div>
         <Table
           className="rounded-lg border border-gray-200"
           columns={usersColumns}
           data={users}
           pagination={{
+            initialPage: parseInt(new URLSearchParams(search).get("p") || "1"),
             pageSize,
             pageCount,
             total,

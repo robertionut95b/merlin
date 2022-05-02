@@ -1,5 +1,5 @@
 import { Breadcrumbs } from "@mantine/core";
-import { Link } from "remix";
+import { Link } from "@remix-run/react";
 import { capitalizeFirstLetter } from "src/helpers/capitalize";
 import useBreadcrumbs from "use-react-router-breadcrumbs";
 

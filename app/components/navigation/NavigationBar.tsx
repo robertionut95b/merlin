@@ -1,6 +1,6 @@
 import { UserButton } from "@clerk/clerk-react";
 import { useMemo } from "react";
-import { useLocation } from "remix";
+import { useLocation } from "@remix-run/react";
 import BurgerButton from "./BurgerButton";
 import NavigationButton from "./NavigationButton";
 import NavigationButtonMobile from "./NavigationButtonMobile";

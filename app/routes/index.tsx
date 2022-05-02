@@ -1,5 +1,5 @@
 import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
-import { LoaderFunction, redirect } from "remix";
+import { LoaderFunction, redirect } from "@remix-run/node";
 
 const IndexPage = (): null => {
   return null;

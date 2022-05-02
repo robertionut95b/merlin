@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
-import NodeCache from "node-cache";
+import type { Prisma } from "@prisma/client";
+import type NodeCache from "node-cache";
 
 export async function cacheModelByQuery(
   model: string,

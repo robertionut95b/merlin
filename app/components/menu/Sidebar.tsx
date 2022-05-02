@@ -1,13 +1,9 @@
 import { Collapse } from "@mantine/core";
 import { useState } from "react";
-import { IMenuOptionProps } from "./Items";
-import ManagementMenuItem from "./ManagementMenuItem";
+import type { IMenuOptionProps } from "./Items";
+import ManagementMenuItem from "./SidebarItem";
 
-const ManagementMenu = ({
-  options,
-}: {
-  options: IMenuOptionProps[];
-}): JSX.Element => {
+const SideBar = ({ options }: { options: IMenuOptionProps[] }): JSX.Element => {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   return (
     <aside className="h-full">
@@ -43,21 +39,24 @@ const ManagementMenu = ({
                 />
               </svg>
             ) : (
-              <svg
-                width="24"
-                height="24"
-                strokeWidth="1.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M15 6L9 12L15 18"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <div className="flex items-center">
+                <svg
+                  width="24"
+                  height="24"
+                  strokeWidth="1.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M15 6L9 12L15 18"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="text-sm">Collapse sidebar</span>
+              </div>
             )}
           </button>
         </div>
@@ -70,7 +69,7 @@ const ManagementMenu = ({
         </Collapse>
         <div className="btn-collapse flex justify-center">
           <button
-            className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-300 bg-gray-200 text-center"
+            className="flex w-full items-center justify-center text-center"
             onClick={() => setCollapsed(!collapsed)}
           >
             {!collapsed ? (
@@ -113,4 +112,4 @@ const ManagementMenu = ({
   );
 };
 
-export default ManagementMenu;
+export default SideBar;

@@ -8,8 +8,8 @@ export const PermissionModel = z.object({
   action: z.nativeEnum(ActionType).array().min(1, { message: "Must have at least one action type" }).or(z.string()),
   allowed: z.boolean(),
   roleId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 })
 
 export interface CompletePermission extends z.infer<typeof PermissionModel> {

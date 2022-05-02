@@ -1,4 +1,4 @@
-import { ActionType, ObjectType } from "@prisma/client";
+import type { ActionType, ObjectType } from "@prisma/client";
 import { _validate } from "~/models/permission-validate.server";
 import { getClerkUser } from "./clerk";
 

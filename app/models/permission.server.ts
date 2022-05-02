@@ -1,5 +1,5 @@
 import { prisma } from "~/db.server";
-import { ObjectType, Prisma, PrismaClient } from "@prisma/client";
+import type { ObjectType, Prisma, PrismaClient } from "@prisma/client";
 import { PermissionModel } from "src/generated/zod";
 
 export async function getPermissions(
