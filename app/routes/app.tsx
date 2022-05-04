@@ -11,14 +11,15 @@ export default function Index() {
       <div className="nav">
         <NavigationBar />
       </div>
-      <TopBanner
-        className="flex min-h-[3rem] justify-center border border-b border-gray-200"
-        message="The app will undergo a scheduled maintenance during this Thursday, August 21st, 2021. We apologize for the inconvenience."
-      />
+      <div className="banner">
+        <TopBanner
+          className="flex justify-center border border-b border-gray-200"
+          message="The app will undergo a scheduled maintenance during this Thursday, August 21st, 2021. We apologize for the inconvenience."
+        />
+      </div>
       <div className="content grow">
         <Outlet />
       </div>
-      {/* <MinimalFooter /> */}
     </main>
   );
 }

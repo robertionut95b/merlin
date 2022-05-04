@@ -120,6 +120,7 @@ model Theatre {
   name String
   location Location @relation(fields: [locationId], references: [id])
   locationId String
+  // @zod.number().int()
   capacity Int
   spots Spot[]
 

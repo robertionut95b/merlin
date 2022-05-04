@@ -1,12 +1,12 @@
+import { ObjectType } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
-import { menuOptions } from "~/components/menu/Items";
-import { _getAccessibleResources } from "~/models/permission-validate.server";
-import { ObjectType } from "@prisma/client";
 import { getClerkUser } from "src/helpers/clerk";
-import PageBreadcrumbs from "~/components/navigation/PageBreadcrumbs";
+import { menuOptions } from "~/components/menu/Items";
 import SideBar from "~/components/menu/Sidebar";
+import PageBreadcrumbs from "~/components/navigation/PageBreadcrumbs";
+import { _getAccessibleResources } from "~/models/permission-validate.server";
 
 const ManagementPage = (): JSX.Element => {
   const { opts } = useLoaderData<{
@@ -19,7 +19,7 @@ const ManagementPage = (): JSX.Element => {
 
   return (
     <>
-      <div className="management flex h-full flex-col gap-y-6 md:flex-row">
+      <div className="management flex h-full flex-col md:flex-row">
         <div className="left-side-menu gap-y-2 bg-white p-2">
           <SideBar options={menuOp} />
         </div>

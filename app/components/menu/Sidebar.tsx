@@ -1,10 +1,17 @@
 import { Collapse } from "@mantine/core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { IMenuOptionProps } from "./Items";
 import ManagementMenuItem from "./SidebarItem";
 
 const SideBar = ({ options }: { options: IMenuOptionProps[] }): JSX.Element => {
   const [collapsed, setCollapsed] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCollapsed(localStorage.getItem("sidebar-collapsed") === "true");
+    }
+  }, []);
+
   return (
     <aside className="h-full">
       <div className="hidden h-full md:block">
@@ -20,7 +27,10 @@ const SideBar = ({ options }: { options: IMenuOptionProps[] }): JSX.Element => {
           </div>
           <button
             className="mt-4 flex w-full justify-center self-end rounded-md border border-indigo-800 bg-indigo-700 text-white"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => {
+              setCollapsed(!collapsed);
+              localStorage.setItem("sidebar-collapsed", String(!collapsed));
+            }}
           >
             {collapsed ? (
               <svg
@@ -69,7 +79,7 @@ const SideBar = ({ options }: { options: IMenuOptionProps[] }): JSX.Element => {
         </Collapse>
         <div className="btn-collapse flex justify-center">
           <button
-            className="flex w-full items-center justify-center text-center"
+            className="mt-2 flex w-full items-center justify-center rounded bg-indigo-700 text-center text-white"
             onClick={() => setCollapsed(!collapsed)}
           >
             {!collapsed ? (
