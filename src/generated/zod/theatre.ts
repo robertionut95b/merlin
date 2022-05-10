@@ -1,18 +1,18 @@
 import * as z from "zod"
-import { CompleteLocation, RelatedLocationModel, CompleteSpot, RelatedSpotModel } from "./index"
+import { CompleteLocation, RelatedLocationModel, CompleteSeat, RelatedSeatModel } from "./index"
 
 export const TheatreModel = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().uuid().optional(),
+  name: z.string().min(5, { message: "Name must have at least 5 characters" }),
   locationId: z.string(),
-  capacity: z.number().int(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  capacity: z.number().int().optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 })
 
 export interface CompleteTheatre extends z.infer<typeof TheatreModel> {
   location: CompleteLocation
-  spots: CompleteSpot[]
+  spots: CompleteSeat[]
 }
 
 /**
@@ -22,5 +22,5 @@ export interface CompleteTheatre extends z.infer<typeof TheatreModel> {
  */
 export const RelatedTheatreModel: z.ZodSchema<CompleteTheatre> = z.lazy(() => TheatreModel.extend({
   location: RelatedLocationModel,
-  spots: RelatedSpotModel.array(),
+  spots: RelatedSeatModel.array(),
 }))

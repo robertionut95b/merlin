@@ -23,7 +23,7 @@ const ManagementPage = (): JSX.Element => {
         <div className="left-side-menu gap-y-2 bg-white p-2">
           <SideBar options={menuOp} />
         </div>
-        <div className="right-side-content w-full border-l border-l-gray-200 bg-white px-4 pb-2">
+        <div className="right-side-content w-full overflow-x-auto border-l border-l-gray-200 bg-white px-4 pb-2">
           <div className="page-breadcrumbs my-6">
             <PageBreadcrumbs />
           </div>

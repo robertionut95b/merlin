@@ -1,41 +1,45 @@
-import { Button, Group, Stepper } from "@mantine/core";
-import type { Location, Theatre } from "@prisma/client";
+import { Divider } from "@mantine/core";
+import type { Address, Location, Seat, Theatre } from "@prisma/client";
 import { withZod } from "@remix-validated-form/with-zod";
 import { useState } from "react";
 import { ValidatedForm } from "remix-validated-form";
 import { TheatreModel } from "src/generated/zod";
+import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 import { zfd } from "zod-form-data";
 import ThreatreConfig from "../configurator/TheatreConfig";
-import type { SeatsConfiguration } from "../configurator/types";
 import { DateTimeInput } from "../validated-form/DateTimeInput";
 import SelectInput from "../validated-form/SelectInput";
 import { SubmitButton } from "../validated-form/SubmitButton";
 import { TextInput } from "../validated-form/TextInput";
 
-const validator = withZod(zfd.formData(TheatreModel));
+const Model = TheatreModel.extend({
+  id: z.string(),
+  seats: zfd.json(
+    z.array(
+      z.object({
+        row: z.number(),
+        column: z.number(),
+        theatreId: z.string(),
+      })
+    )
+  ),
+});
+
+const validator = withZod(zfd.formData(Model));
 
 const NewTheatreForm = ({
   theatre,
   locations = [],
   readOnly,
 }: {
-  theatre?: Theatre;
-  locations?: Location[];
+  theatre?: Theatre & { seats: Seat[] };
+  locations?: (Location & {
+    address: Address;
+  })[];
   readOnly?: boolean;
 }): JSX.Element => {
-  const [active, setActive] = useState<number>(0);
-  const nextStep = () =>
-    setActive((current) => (current < 3 ? current + 1 : current));
-  const prevStep = () =>
-    setActive((current) => (current > 0 ? current - 1 : current));
-
-  const [name, setName] = useState<string>(theatre?.name || "");
-  const [location, setLocation] = useState<string>(theatre?.locationId || "");
-  const [createdAt] = useState<Date>(theatre?.createdAt || new Date());
-  const [updatedAt] = useState<Date>(theatre?.updatedAt || new Date());
-  const [spots, setSpots] = useState<SeatsConfiguration[]>([]);
-  const [rows, setRows] = useState<number>(3);
-  const [columns, setColumns] = useState<number>(3);
+  const [theatreId] = useState(theatre?.id || uuidv4());
 
   return (
     <div className="new-theatre flex flex-col gap-6">
@@ -49,104 +53,57 @@ const NewTheatreForm = ({
         </div>
       </div>
       <ValidatedForm
+        className="flex flex-col gap-y-4"
+        aria-readonly={readOnly}
         method={"post"}
         validator={validator}
         defaultValues={{
-          name: name,
-          locationId: location,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
+          id: theatre?.id || theatreId,
+          name: theatre?.name,
+          locationId: theatre?.locationId,
+          createdAt: theatre?.createdAt || new Date(),
+          updatedAt: theatre?.updatedAt || new Date(),
+          capacity: 0,
+          seats: theatre?.seats || [],
         }}
       >
-        <Stepper
-          active={active}
-          onStepClick={setActive}
-          breakpoint="md"
-          iconSize={36}
-          classNames={{
-            steps: "mb-4",
-          }}
-        >
-          <Stepper.Step
-            label="Information"
-            description="Base information"
-            allowStepSelect={active > 0}
-          >
-            <div className="step-one flex flex-col gap-y-4">
-              <TextInput
-                required
-                name={"name"}
-                label="Name"
-                readOnly={readOnly}
-                defaultValue={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <SelectInput
-                name="location"
-                label="Location"
-                data={locations.map((l) => ({ label: l.name, value: l.id }))}
-                defaultValue={location}
-                onChange={(val) => setLocation(val ? val : "")}
-                required
-              />
-              <DateTimeInput
-                disabled
-                label="Created"
-                type="date"
-                name="createdAt"
-              />
-              <DateTimeInput
-                disabled
-                label="Updated"
-                type="date"
-                name="updatedAt"
-              />
-            </div>
-          </Stepper.Step>
-          <Stepper.Step
-            label="Configuration"
-            description="Spots and entrances"
-            allowStepSelect={active > 1}
-          >
-            <ThreatreConfig
-              configuration={{
-                columns,
-                rows,
-                spots,
-                setSpots,
-                setRows,
-                setColumns,
-              }}
-            />
-          </Stepper.Step>
-          <Stepper.Step
-            label="Confirm"
-            description="Confirm the build"
-            allowStepSelect={active > 2}
-          >
-            {!readOnly && (
-              <SubmitButton
-                className={"place-self-start"}
-                type={"submit"}
-                variant="outline"
-                color="indigo"
-              />
-            )}
-          </Stepper.Step>
-          <Stepper.Completed>
-            Completed, click back button to get to previous step
-          </Stepper.Completed>
-        </Stepper>
+        <h4 className="text-lg font-bold">Base properties</h4>
+        <TextInput
+          name="id"
+          label="Id"
+          defaultValue={theatreId}
+          readOnly={true}
+        />
+        <TextInput
+          required
+          name={"name"}
+          label="Name"
+          readOnly={readOnly}
+          defaultValue={theatre?.name}
+        />
+        <SelectInput
+          name="locationId"
+          label="Location"
+          data={locations.map((l) => ({
+            label: `${l.name} - ${l.address.street}, ${l.address.city} ${l.address.country}`,
+            value: l.id,
+          }))}
+          defaultValue={theatre?.locationId}
+          required
+        />
+        <DateTimeInput disabled label="Created" type="date" name="createdAt" />
+        <DateTimeInput disabled label="Updated" type="date" name="updatedAt" />
+        <Divider />
+        <ThreatreConfig theatreId={theatreId} />
+        {!readOnly && (
+          <SubmitButton
+            className={"place-self-start"}
+            type={"submit"}
+            variant="outline"
+            color="indigo"
+          />
+        )}
       </ValidatedForm>
-
-      <Group position="center" mt="xl">
-        <Button variant="default" onClick={prevStep}>
-          Back
-        </Button>
-        <Button variant="outline" onClick={nextStep}>
-          Next
-        </Button>
-      </Group>
     </div>
   );
 };

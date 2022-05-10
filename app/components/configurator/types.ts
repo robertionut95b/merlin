@@ -1,13 +1,12 @@
-export type SeatsConfiguration = {
-  row: number;
-  column: number;
-};
+import type { Prisma } from "@prisma/client";
 
 export type TheatreConfiguration = {
   rows: number;
   columns: number;
-  spots: SeatsConfiguration[];
-  setSpots?: React.Dispatch<React.SetStateAction<SeatsConfiguration[]>>;
+  seats: Prisma.SeatUncheckedCreateInput[];
+  setSeats?: React.Dispatch<
+    React.SetStateAction<Prisma.SeatUncheckedCreateInput[]>
+  >;
   setRows?: React.Dispatch<React.SetStateAction<number>>;
   setColumns?: React.Dispatch<React.SetStateAction<number>>;
 };

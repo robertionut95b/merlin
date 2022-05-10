@@ -36,5 +36,8 @@
     "editor.codeActionsOnSave": {
       "source.organizeImports": true
     }
-  }
+  },
+  "editor.guides.bracketPairsHorizontal": true,
+  "editor.inlayHints.enabled": "on",
+  "editor.guides.highlightActiveIndentation": true
 }

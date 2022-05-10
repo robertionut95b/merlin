@@ -1,4 +1,4 @@
-import { ActionType, ObjectType } from "@prisma/client";
+import type { ActionType, ObjectType } from "@prisma/client";
 import { prisma } from "~/db.server";
 
 export const _validate = async (

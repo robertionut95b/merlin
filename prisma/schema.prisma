@@ -104,26 +104,33 @@ model Location {
   updatedAt DateTime @updatedAt
 }
 
-model Spot {
-  number Int
+model Seat {
+  row   Int
+  column Int
   theatre Theatre @relation(fields: [theatreId], references: [id])
   theatreId String
 
+  /// @zod.optional() 
   createdAt DateTime @default(now())
+  /// @zod.optional()
   updatedAt DateTime @updatedAt
 
-  @@id([number, theatreId])
+  @@id([row, column, theatreId])
 }
 
 model Theatre {
+  /// @zod.uuid().optional()
   id String @id @default(cuid())
+  /// @zod.min(5, {message: "Name must have at least 5 characters"})
   name String
   location Location @relation(fields: [locationId], references: [id])
   locationId String
-  // @zod.number().int()
+  /// @zod.optional()
   capacity Int
-  spots Spot[]
+  spots Seat[]
 
+  /// @zod.optional()
   createdAt DateTime @default(now())
+  /// @zod.optional()
   updatedAt DateTime @updatedAt
 }

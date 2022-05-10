@@ -1,6 +1,7 @@
 import { Checkbox, TextInput } from "@mantine/core";
+import type { Prisma } from "@prisma/client";
 import { useEffect, useState } from "react";
-import type { SeatsConfiguration, TheatreConfiguration } from "./types";
+import type { TheatreConfiguration } from "./types";
 import {
   addEntireRowSeats,
   addSpot,
@@ -9,16 +10,22 @@ import {
 } from "./utils";
 
 const ThreatreConfig = ({
+  theatreId,
   configuration,
 }: {
+  theatreId: string;
   configuration?: TheatreConfiguration;
 }): JSX.Element => {
   const [rows, setRows] = useState<number>(configuration?.rows || 3);
   const [columns, setColumns] = useState<number>(configuration?.columns || 3);
-  const [seats, setSeats] = useState<SeatsConfiguration[]>(
-    configuration?.spots || []
+  const [seats, setSeats] = useState<Prisma.SeatUncheckedCreateInput[]>(
+    configuration?.seats || []
   );
+  const [jsonSeats, setJsonSeats] = useState<string>();
   const [selectedRows, setSelectedRows] = useState<{}>({});
+  const [capacity, setCapacity] = useState<number>(rows * columns);
+
+  useEffect(() => setCapacity(rows * columns), [rows, columns]);
 
   useEffect(() => {
     Array(rows)
@@ -51,10 +58,12 @@ const ThreatreConfig = ({
       });
   }, [columns, rows, seats]);
 
+  useEffect(() => setJsonSeats(JSON.stringify(seats)), [seats]);
+
   return (
     <div className="main flex flex-col gap-4">
       <div className="configurator-options flex flex-col gap-4">
-        <h4 className="text-lg font-bold">Base specifications</h4>
+        <h4 className="text-lg font-bold">Theatre map configuration</h4>
         <TextInput
           type="number"
           name="rows"
@@ -81,6 +90,17 @@ const ThreatreConfig = ({
             configuration?.setColumns?.(Number(e.target.value));
           }}
         />
+        <TextInput
+          type="number"
+          name="capacity"
+          placeholder="Number of possible seats"
+          label="Capacity"
+          value={capacity}
+          min={1}
+          onChange={(e) => setCapacity(Number(e.target.value))}
+          disabled
+        />
+        <TextInput className="hidden" name="seats" defaultValue={jsonSeats} />
       </div>
       <div className="legend mt-2 flex flex-col gap-4">
         <h4 className="text-lg font-bold">Legend</h4>
@@ -104,7 +124,7 @@ const ThreatreConfig = ({
         </div>
         <p className="text-sm">
           Free spaces can be considered as hallways, as long as they traverse
-          through the entire width or height of the room
+          through a specific or entire width/height of the room
         </p>
       </div>
       <h4 className="text-lg font-bold">Map editor</h4>
@@ -132,9 +152,11 @@ const ThreatreConfig = ({
                   label={`R${row + 1}`}
                   size={"sm"}
                   onChange={(e) => {
-                    setSeats(addEntireRowSeats(seats, row, columns, columns));
-                    configuration?.setSpots?.(
-                      addEntireRowSeats(seats, row, columns, columns)
+                    setSeats(
+                      addEntireRowSeats(seats, row, columns, theatreId, columns)
+                    );
+                    configuration?.setSeats?.(
+                      addEntireRowSeats(seats, row, columns, theatreId, columns)
                     );
                     setSelectedRows((prev) => {
                       return {
@@ -150,15 +172,18 @@ const ThreatreConfig = ({
                   .fill(0)
                   .map((__, column) => (
                     <button
+                      type={"button"}
                       key={column}
-                      className={`column-${column} flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-gray-700 p-4 transition-colors duration-200 hover:bg-gray-400 ${
+                      className={`column-${column} flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-gray-700 p-4 transition-colors duration-200 hover:bg-gray-400 ${
                         checkSpotIsAdded(row, column, seats)
                           ? "bg-gray-700 text-white"
                           : null
                       }`}
                       onClick={() => {
-                        setSeats(addSpot(seats, row, column));
-                        configuration?.setSpots?.(addSpot(seats, row, column));
+                        setSeats(addSpot(seats, row, column, theatreId));
+                        configuration?.setSeats?.(
+                          addSpot(seats, row, column, theatreId)
+                        );
                       }}
                     >
                       {column + 1}
