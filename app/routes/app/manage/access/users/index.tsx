@@ -1,51 +1,46 @@
-import { Button } from "@mantine/core";
+import { useModals } from "@mantine/modals";
 import type { User } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import {
-  Link,
-  useLoaderData,
-  useLocation,
-  useNavigate,
-} from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { useLoaderData, useLocation, useNavigate } from "@remix-run/react";
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
 import type { Column } from "react-table";
-import { IsAllowedAccess } from "src/helpers/remix.rbac";
+import { authorizationLoader } from "src/helpers/remix.rbac";
+import {
+  mapFiltersToQueryParams,
+  mapQueryParamsToFilters,
+} from "src/remix/remix-routes";
 import DataAlert from "~/components/layout/DataAlert";
 import Table from "~/components/tables/Table";
 import { getUsersWithPagination } from "~/models/user.server";
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const access = await IsAllowedAccess({
-    request,
+export const loader: LoaderFunction = (args) =>
+  authorizationLoader({
+    ...args,
     actions: ["Read", "All"],
     objects: ["User", "All"],
+    loader: async ({ request }) => {
+      const url = new URL(request.url);
+      const queryParams = url.searchParams;
+
+      const pageSize = 10;
+      const page = parseInt(queryParams.get("p") || "0");
+      const skip = page === 0 || page === 1 ? 0 : page * pageSize - 1;
+      const { paginationMeta, users } = await getUsersWithPagination({
+        take: pageSize,
+        skip,
+      });
+      const pageCount = Math.ceil(paginationMeta.total / pageSize);
+
+      return json({
+        users,
+        total: paginationMeta.total,
+        pageSize,
+        pageCount,
+      });
+    },
   });
-
-  if (!access) {
-    return redirect("/app");
-  }
-
-  const url = new URL(request.url);
-  const queryParams = url.searchParams;
-
-  const pageSize = 10;
-  const page = parseInt(queryParams.get("p") || "0");
-  const skip = page === 0 || page === 1 ? 0 : page * pageSize - 1;
-  const { paginationMeta, users } = await getUsersWithPagination({
-    take: pageSize,
-    skip,
-  });
-  const pageCount = Math.ceil(paginationMeta.total / pageSize);
-
-  return json({
-    users,
-    total: paginationMeta.total,
-    pageSize,
-    pageCount,
-  });
-};
 
 export const UsersPage = (): JSX.Element => {
   const { users, pageCount, pageSize, total } = useLoaderData<{
@@ -81,6 +76,7 @@ export const UsersPage = (): JSX.Element => {
 
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
+  const modals = useModals();
 
   return (
     <>
@@ -95,11 +91,6 @@ export const UsersPage = (): JSX.Element => {
         <br />
       </div>
       <div className="users">
-        <div className="table-options mb-4">
-          <Link to={pathname + "/new"}>
-            <Button variant="outline">Create</Button>
-          </Link>
-        </div>
         <Table
           className="rounded-lg border border-gray-200"
           columns={usersColumns}
@@ -109,7 +100,51 @@ export const UsersPage = (): JSX.Element => {
             pageSize,
             pageCount,
             total,
-            onPageChange: (page: number) => navigate(`?p=${page}`),
+          }}
+          manipulation={{
+            onFilters: (filters, _globalFilter) => {
+              return navigate(mapFiltersToQueryParams(pathname, filters), {
+                replace: true,
+              });
+            },
+            defaultFilters: mapQueryParamsToFilters(search),
+            clearFilters: () => navigate(pathname, { replace: true }),
+          }}
+          selection={{
+            onDelete: (row) =>
+              modals.openConfirmModal({
+                title: "Delete User",
+                centered: true,
+                confirmProps: {
+                  variant: "light",
+                  color: "red",
+                },
+                children: (
+                  <span className="my-2 text-sm">
+                    Are you sure you want to delete this item?
+                  </span>
+                ),
+                labels: { confirm: "Confirm", cancel: "Cancel" },
+                onCancel: () => null,
+                onConfirm: () => null,
+              }),
+            onDeleteMany: (_rows) =>
+              modals.openConfirmModal({
+                title: "Delete User",
+                centered: true,
+                confirmProps: {
+                  variant: "light",
+                  color: "red",
+                },
+                children: (
+                  <span className="my-2 text-sm">
+                    Are you sure you want to delete the selected entries?
+                  </span>
+                ),
+                labels: { confirm: "Confirm", cancel: "Cancel" },
+                onCancel: () => null,
+                onConfirm: () => null,
+              }),
           }}
         />
       </div>

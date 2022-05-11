@@ -13,7 +13,7 @@ interface ITablePaginationProps {
 
 export const TablePagination = ({
   initialPage,
-  pageLength,
+  pageSize,
   page,
   total,
   pageCount,
@@ -23,7 +23,7 @@ export const TablePagination = ({
   return (
     <div className="flex items-center justify-end gap-x-4">
       <span className="font-normal">
-        {pageLength * page} of <b>{total}</b>
+        {`${page === pageCount ? total : pageSize * page}`} of <b>{total}</b>
       </span>
       <Pagination
         initialPage={initialPage}

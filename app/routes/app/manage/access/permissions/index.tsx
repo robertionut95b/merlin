@@ -1,3 +1,4 @@
+import { useModals } from "@mantine/modals";
 import type { Permission } from "@prisma/client";
 import { ActionType } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
@@ -117,6 +118,7 @@ const PermissionsPage = (): JSX.Element => {
 
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
+  const modals = useModals();
 
   return (
     <>
@@ -132,7 +134,6 @@ const PermissionsPage = (): JSX.Element => {
       </div>
       <div className="permissions">
         <Table
-          className="rounded-lg border border-gray-200"
           columns={permsColumns}
           data={permissions}
           pagination={{
@@ -140,7 +141,6 @@ const PermissionsPage = (): JSX.Element => {
             pageSize,
             pageCount,
             total,
-            onPageChange: (page: number) => navigate(`?&p=${page}`),
           }}
           manipulation={{
             onCreate: () => navigate(`${pathname}/new`, { replace: true }),
@@ -151,6 +151,42 @@ const PermissionsPage = (): JSX.Element => {
             },
             defaultFilters: mapQueryParamsToFilters(search),
             clearFilters: () => navigate(pathname, { replace: true }),
+          }}
+          selection={{
+            onDelete: (row) =>
+              modals.openConfirmModal({
+                title: "Delete Permission",
+                centered: true,
+                confirmProps: {
+                  variant: "light",
+                  color: "red",
+                },
+                children: (
+                  <span className="my-2 text-sm">
+                    Are you sure you want to delete this item?
+                  </span>
+                ),
+                labels: { confirm: "Confirm", cancel: "Cancel" },
+                onCancel: () => null,
+                onConfirm: () => null,
+              }),
+            onDeleteMany: (_rows) =>
+              modals.openConfirmModal({
+                title: "Delete Permission",
+                centered: true,
+                confirmProps: {
+                  variant: "light",
+                  color: "red",
+                },
+                children: (
+                  <span className="my-2 text-sm">
+                    Are you sure you want to delete the selected entries?
+                  </span>
+                ),
+                labels: { confirm: "Confirm", cancel: "Cancel" },
+                onCancel: () => null,
+                onConfirm: () => null,
+              }),
           }}
         />
       </div>

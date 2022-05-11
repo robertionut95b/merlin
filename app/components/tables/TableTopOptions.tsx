@@ -5,12 +5,14 @@ import { CancelSvg, FilterSvg } from "./TableIcons";
 
 interface ITableTopOptionsProps {
   instance: TableInstance<object>;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
   onCreate?: () => void;
   clearFilters?: () => void;
 }
 
 const TableTopOptions = ({
   instance,
+  setPage,
   onCreate,
   clearFilters,
 }: ITableTopOptionsProps): JSX.Element => {
@@ -35,7 +37,7 @@ const TableTopOptions = ({
         classNames={{
           body: "p-4",
         }}
-        closeOnItemClick={false}
+        // closeOnItemClick={false}
         control={
           <Button variant="outline">
             <FilterSvg size={22} />
@@ -63,6 +65,7 @@ const TableTopOptions = ({
           onClick={() => {
             setAllFilters([]);
             clearFilters?.();
+            setPage(1);
           }}
         >
           Clear filters

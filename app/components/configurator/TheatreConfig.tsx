@@ -10,15 +10,15 @@ import {
 } from "./utils";
 
 const ThreatreConfig = ({
-  theatreId,
   configuration,
+  readOnly = false,
 }: {
-  theatreId: string;
   configuration?: TheatreConfiguration;
+  readOnly?: boolean;
 }): JSX.Element => {
   const [rows, setRows] = useState<number>(configuration?.rows || 3);
   const [columns, setColumns] = useState<number>(configuration?.columns || 3);
-  const [seats, setSeats] = useState<Prisma.SeatUncheckedCreateInput[]>(
+  const [seats, setSeats] = useState<Prisma.SeatCreateManyTheatreInput[]>(
     configuration?.seats || []
   );
   const [jsonSeats, setJsonSeats] = useState<string>();
@@ -71,10 +71,11 @@ const ThreatreConfig = ({
           label="Rows"
           required
           defaultValue={rows}
+          readOnly={readOnly}
           min={1}
           onChange={(e) => {
-            setRows(Number(e.target.value));
-            configuration?.setRows?.(Number(e.target.value));
+            setRows(e.target.valueAsNumber);
+            configuration?.setRows?.(e.target.valueAsNumber);
           }}
         />
         <TextInput
@@ -84,23 +85,29 @@ const ThreatreConfig = ({
           label="Columns"
           required
           defaultValue={columns}
+          readOnly={readOnly}
           min={1}
           onChange={(e) => {
-            setColumns(Number(e.target.value));
-            configuration?.setColumns?.(Number(e.target.value));
+            setColumns(e.target.valueAsNumber);
+            configuration?.setColumns?.(e.target.valueAsNumber);
           }}
         />
         <TextInput
-          type="number"
           name="capacity"
+          type={"number"}
           placeholder="Number of possible seats"
           label="Capacity"
           value={capacity}
+          onChange={(e) => setCapacity(e.target.valueAsNumber)}
+          readOnly
           min={1}
-          onChange={(e) => setCapacity(Number(e.target.value))}
-          disabled
         />
-        <TextInput className="hidden" name="seats" defaultValue={jsonSeats} />
+        <TextInput
+          className="hidden"
+          name="seats"
+          defaultValue={jsonSeats}
+          readOnly={readOnly}
+        />
       </div>
       <div className="legend mt-2 flex flex-col gap-4">
         <h4 className="text-lg font-bold">Legend</h4>
@@ -151,12 +158,11 @@ const ThreatreConfig = ({
                 <Checkbox
                   label={`R${row + 1}`}
                   size={"sm"}
+                  disabled={readOnly}
                   onChange={(e) => {
-                    setSeats(
-                      addEntireRowSeats(seats, row, columns, theatreId, columns)
-                    );
+                    setSeats(addEntireRowSeats(seats, row, columns, columns));
                     configuration?.setSeats?.(
-                      addEntireRowSeats(seats, row, columns, theatreId, columns)
+                      addEntireRowSeats(seats, row, columns, columns)
                     );
                     setSelectedRows((prev) => {
                       return {
@@ -174,16 +180,15 @@ const ThreatreConfig = ({
                     <button
                       type={"button"}
                       key={column}
+                      disabled={readOnly}
                       className={`column-${column} flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-gray-700 p-4 transition-colors duration-200 hover:bg-gray-400 ${
                         checkSpotIsAdded(row, column, seats)
                           ? "bg-gray-700 text-white"
                           : null
                       }`}
                       onClick={() => {
-                        setSeats(addSpot(seats, row, column, theatreId));
-                        configuration?.setSeats?.(
-                          addSpot(seats, row, column, theatreId)
-                        );
+                        setSeats(addSpot(seats, row, column));
+                        configuration?.setSeats?.(addSpot(seats, row, column));
                       }}
                     >
                       {column + 1}

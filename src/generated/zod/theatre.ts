@@ -4,15 +4,17 @@ import { CompleteLocation, RelatedLocationModel, CompleteSeat, RelatedSeatModel 
 export const TheatreModel = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(5, { message: "Name must have at least 5 characters" }),
-  locationId: z.string(),
+  locationId: z.string().min(1, { message: "Must have a location set" }),
   capacity: z.number().int().optional(),
+  rows: z.number().int(),
+  columns: z.number().int(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 })
 
 export interface CompleteTheatre extends z.infer<typeof TheatreModel> {
   location: CompleteLocation
-  spots: CompleteSeat[]
+  seats: CompleteSeat[]
 }
 
 /**
@@ -22,5 +24,5 @@ export interface CompleteTheatre extends z.infer<typeof TheatreModel> {
  */
 export const RelatedTheatreModel: z.ZodSchema<CompleteTheatre> = z.lazy(() => TheatreModel.extend({
   location: RelatedLocationModel,
-  spots: RelatedSeatModel.array(),
+  seats: RelatedSeatModel.array().min(1, { message: "Must have at least one seat" }),
 }))

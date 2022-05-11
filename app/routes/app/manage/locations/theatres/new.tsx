@@ -14,22 +14,27 @@ import { TheatreModel } from "src/generated/zod";
 import { IsAllowedAccess } from "src/helpers/remix.rbac";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
-import NewTheatreForm from "~/components/forms/TheatreForm";
+import TheatreForm from "~/components/forms/TheatreForm";
 import InputAlert from "~/components/layout/InputAlert";
 import { AlertCircle } from "~/components/react-icons/AlertCircle";
 import { getLocations } from "~/models/locations.server";
+import { createTheatre } from "~/models/theatre.server";
 import NewRolePage from "../../access/roles/new";
 
 const Model = TheatreModel.extend({
+  capacity: z.string().transform((v) => parseInt(v)),
   seats: zfd.json(
-    z.array(
-      z.object({
-        row: z.number(),
-        column: z.number(),
-        theatreId: z.string(),
-      })
-    )
+    z
+      .array(
+        z.object({
+          row: z.number(),
+          column: z.number(),
+        })
+      )
+      .min(1, { message: "Must have at least one seat" })
   ),
+  rows: z.string().transform((v) => parseInt(v)),
+  columns: z.string().transform((v) => parseInt(v)),
 });
 
 const validator = withZod(zfd.formData(Model));
@@ -48,10 +53,18 @@ export const action: ActionFunction = async ({ request }) => {
   const result = await validator.validate(await request.formData());
   if (result.error) return validationError(result.error);
 
-  console.log(result);
-
   try {
     // create theatre
+    await createTheatre({
+      data: {
+        ...result.data,
+        seats: {
+          createMany: {
+            data: [...result.data.seats],
+          },
+        },
+      },
+    });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e?.code === "P2002") {
@@ -93,11 +106,7 @@ const NewTheatresPage = (): JSX.Element => {
     })[];
   }>();
 
-  return (
-    <div className="new-theatre">
-      <NewTheatreForm locations={locations} />
-    </div>
-  );
+  return <TheatreForm locations={locations} />;
 };
 
 export function CatchBoundary() {

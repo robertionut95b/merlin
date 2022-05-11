@@ -1,10 +1,8 @@
 import { Divider } from "@mantine/core";
 import type { Address, Location, Seat, Theatre } from "@prisma/client";
 import { withZod } from "@remix-validated-form/with-zod";
-import { useState } from "react";
 import { ValidatedForm } from "remix-validated-form";
 import { TheatreModel } from "src/generated/zod";
-import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 import ThreatreConfig from "../configurator/TheatreConfig";
@@ -14,35 +12,36 @@ import { SubmitButton } from "../validated-form/SubmitButton";
 import { TextInput } from "../validated-form/TextInput";
 
 const Model = TheatreModel.extend({
-  id: z.string(),
+  capacity: z.string().transform((v) => parseInt(v)),
   seats: zfd.json(
-    z.array(
-      z.object({
-        row: z.number(),
-        column: z.number(),
-        theatreId: z.string(),
-      })
-    )
+    z
+      .array(
+        z.object({
+          row: z.number(),
+          column: z.number(),
+        })
+      )
+      .min(1, { message: "Must have at least one seat" })
   ),
+  rows: z.string().transform((v) => parseInt(v)),
+  columns: z.string().transform((v) => parseInt(v)),
 });
 
 const validator = withZod(zfd.formData(Model));
 
-const NewTheatreForm = ({
+const TheatreForm = ({
   theatre,
   locations = [],
   readOnly,
 }: {
-  theatre?: Theatre & { seats: Seat[] };
+  theatre?: Theatre & { seats: Seat[] } & { location: Location };
   locations?: (Location & {
     address: Address;
   })[];
   readOnly?: boolean;
 }): JSX.Element => {
-  const [theatreId] = useState(theatre?.id || uuidv4());
-
   return (
-    <div className="new-theatre flex flex-col gap-6">
+    <div className="new-theatre">
       <div className="heading">
         <h3 className="mb-2 text-xl font-bold">New theatre</h3>
         <div className="sub-heading mb-2">
@@ -53,27 +52,23 @@ const NewTheatreForm = ({
         </div>
       </div>
       <ValidatedForm
+        id="new-theatre-form"
         className="flex flex-col gap-y-4"
         aria-readonly={readOnly}
         method={"post"}
         validator={validator}
         defaultValues={{
-          id: theatre?.id || theatreId,
           name: theatre?.name,
-          locationId: theatre?.locationId,
+          locationId: theatre?.location.id,
           createdAt: theatre?.createdAt || new Date(),
           updatedAt: theatre?.updatedAt || new Date(),
-          capacity: 0,
+          capacity: theatre?.capacity,
           seats: theatre?.seats || [],
+          rows: theatre?.rows,
+          columns: theatre?.columns,
         }}
       >
         <h4 className="text-lg font-bold">Base properties</h4>
-        <TextInput
-          name="id"
-          label="Id"
-          defaultValue={theatreId}
-          readOnly={true}
-        />
         <TextInput
           required
           name={"name"}
@@ -90,11 +85,15 @@ const NewTheatreForm = ({
           }))}
           defaultValue={theatre?.locationId}
           required
+          disabled={readOnly}
         />
         <DateTimeInput disabled label="Created" type="date" name="createdAt" />
         <DateTimeInput disabled label="Updated" type="date" name="updatedAt" />
         <Divider />
-        <ThreatreConfig theatreId={theatreId} />
+        <ThreatreConfig
+          readOnly={readOnly}
+          configuration={theatre ? theatre : undefined}
+        />
         {!readOnly && (
           <SubmitButton
             className={"place-self-start"}
@@ -108,4 +107,4 @@ const NewTheatreForm = ({
   );
 };
 
-export default NewTheatreForm;
+export default TheatreForm;

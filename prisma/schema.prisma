@@ -124,10 +124,14 @@ model Theatre {
   /// @zod.min(5, {message: "Name must have at least 5 characters"})
   name String
   location Location @relation(fields: [locationId], references: [id])
+  /// @zod.min(1, {message: "Must have a location set"})
   locationId String
   /// @zod.optional()
   capacity Int
-  spots Seat[]
+  /// @zod.min(1, {message: "Must have at least one seat"})
+  seats Seat[]
+  rows Int
+  columns Int
 
   /// @zod.optional()
   createdAt DateTime @default(now())

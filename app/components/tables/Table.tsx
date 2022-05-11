@@ -1,4 +1,5 @@
 import { Table as MantineTable } from "@mantine/core";
+import { useLocation, useNavigate, useSearchParams } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import type { Column, Filters } from "react-table";
 import {
@@ -14,7 +15,6 @@ import { TablePagination } from "./TablePagination";
 import { TableRowActions } from "./TableRowActions";
 import { TableSelection } from "./TableSelection";
 import TableTopOptions from "./TableTopOptions";
-
 interface ITableProps<T> {
   columns: Column[];
   data: readonly T[];
@@ -45,14 +45,14 @@ interface ITablePaginationProps {
   pageSize: number;
   pageCount: number;
   total: number;
-  onPageChange: (page: number) => void;
+  onPageChange?: (page: number) => void;
   initialPage?: number;
 }
 
 const Table = <T,>({
   columns,
   data,
-  className,
+  className = "rounded-lg border border-gray-200",
   pagination,
   selection,
   manipulation,
@@ -60,6 +60,23 @@ const Table = <T,>({
   const tableData = useMemo(() => data, [data]);
   const tableColumns = useMemo(() => columns, [columns]);
   const [page, setPage] = useState<number>(pagination?.initialPage || 1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+
+  const {
+    onPageChange = (p: number) =>
+      setSearchParams({ ...Object.fromEntries(searchParams), p: p.toString() }),
+  } = pagination || {};
+
+  const {
+    // @ts-expect-error("react-table-types")
+    onView = (row: T) => navigate(`${pathname}/${row?.id}`),
+    // @ts-expect-error("react-table-types")
+    onEdit = (row: T) => navigate(`${pathname}/${row?.id}/edit`),
+  } = selection || {};
+
+  const { onCreate = () => navigate(`${pathname}/new`) } = manipulation || {};
 
   const filterTypes = useMemo(
     () => ({
@@ -137,10 +154,13 @@ const Table = <T,>({
           ...cls,
           {
             id: "actions",
+            Header: "Actions",
             Cell: ({ row }) => (
               <TableRowActions
                 selectedRow={row.original as unknown as T}
                 {...selection}
+                onView={onView}
+                onEdit={onEdit}
               />
             ),
           },
@@ -170,9 +190,14 @@ const Table = <T,>({
   }, [filters, globalFilter]);
 
   return (
-    <div className="overflow-auto">
+    <div>
       {manipulation && (
-        <TableTopOptions instance={instance} {...manipulation} />
+        <TableTopOptions
+          instance={instance}
+          setPage={setPage}
+          {...manipulation}
+          onCreate={onCreate}
+        />
       )}
       <MantineTable
         striped
@@ -226,12 +251,10 @@ const Table = <T,>({
                 <TablePagination
                   page={page}
                   pageLength={data.length}
-                  setPage={(p) => {
-                    setPage(p);
-                    pagination.onPageChange(p);
-                  }}
+                  setPage={(p) => setPage(p)}
                   initialPage={page}
                   {...pagination}
+                  onPageChange={onPageChange}
                 />
               )}
             </div>

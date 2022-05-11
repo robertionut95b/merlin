@@ -9,7 +9,7 @@ export async function getLocations(
   });
 }
 
-export async function getPermissionsWithPagination(
+export async function getLocationsWithPagination(
   opts?: Parameters<PrismaClient["location"]["findMany"]>[number]
 ): Promise<{
   locations: Awaited<ReturnType<typeof prisma.location.findMany>>;

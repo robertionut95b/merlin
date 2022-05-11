@@ -1,12 +1,11 @@
 import type { Prisma } from "@prisma/client";
 
 export const addSpot = (
-  seats: Prisma.SeatUncheckedCreateInput[],
+  seats: Prisma.SeatCreateManyTheatreInput[],
   row: number,
-  column: number,
-  theatreId: string
-): Prisma.SeatUncheckedCreateInput[] => {
-  const spot = { row, column, theatreId };
+  column: number
+): Prisma.SeatCreateManyTheatreInput[] => {
+  const spot = { row, column };
   // check if spot already exists
   if (checkSpotIsAdded(row, column, seats)) {
     // remove spot
@@ -20,12 +19,12 @@ export const addSpot = (
 export const checkSpotIsAdded = (
   row: number,
   column: number,
-  seats: Prisma.SeatUncheckedCreateInput[]
+  seats: Prisma.SeatCreateManyTheatreInput[]
 ) => seats.some((spot) => spot.row === row && spot.column === column);
 
 export const checkAllSeatsInRowAreAdded = (
   row: number,
-  seats: Prisma.SeatUncheckedCreateInput[],
+  seats: Prisma.SeatCreateManyTheatreInput[],
   totalCols: number
 ) =>
   seats.reduce((acc, curr) => (curr.row === row ? acc + 1 : acc + 0), 0) ===
@@ -33,17 +32,16 @@ export const checkAllSeatsInRowAreAdded = (
 
 const checkAnySpotInRowIsAdded = (
   row: number,
-  seats: Prisma.SeatUncheckedCreateInput[]
+  seats: Prisma.SeatCreateManyTheatreInput[]
 ) => seats.some((spot) => spot.row === row);
 
 export const addEntireRowSeats = (
-  seats: Prisma.SeatUncheckedCreateInput[],
+  seats: Prisma.SeatCreateManyTheatreInput[],
   row: number,
   columns: number,
-  theatreId: string,
   totalCols: number
-): Prisma.SeatUncheckedCreateInput[] => {
-  const seatsToAdd: Prisma.SeatUncheckedCreateInput[] = [];
+): Prisma.SeatCreateManyTheatreInput[] => {
+  const seatsToAdd: Prisma.SeatCreateManyTheatreInput[] = [];
   // check if row already exists or if any element exists on the row
   if (
     checkAllSeatsInRowAreAdded(row, seats, totalCols) ||
@@ -58,7 +56,6 @@ export const addEntireRowSeats = (
         column: i,
         createdAt: new Date(),
         updatedAt: new Date(),
-        theatreId,
       });
     }
   }
