@@ -1,3 +1,8 @@
+import { ClerkApp, ClerkCatchBoundary } from "@clerk/remix";
+import { rootAuthLoader } from "@clerk/remix/ssr.server";
+import { MantineProvider } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
+import { NotificationsProvider } from "@mantine/notifications";
 import type {
   LinksFunction,
   LoaderFunction,
@@ -12,17 +17,12 @@ import {
   ScrollRestoration,
   useCatch,
 } from "@remix-run/react";
-import { rootAuthLoader } from "@clerk/remix/ssr.server";
-import tailwindStylesheetUrl from "./styles/tailwind.css";
-import { ClerkApp, ClerkCatchBoundary } from "@clerk/remix";
-import NotFoundPage from "./components/navigation/NotFound";
-import { MantineProvider } from "@mantine/core";
 import AccessUnauthorizedPage from "./components/navigation/AccessUnauthorized";
-import { NotificationsProvider } from "@mantine/notifications";
-import { ModalsProvider } from "@mantine/modals";
+import NotFoundPage from "./components/navigation/NotFound";
+import tailwindStylesheetUrl from "./styles/tailwind.css";
 
 export const links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
+  return [{ rel: "stylesheet", href: tailwindStylesheetUrl, as: "style" }];
 };
 
 export const meta: MetaFunction = () => ({

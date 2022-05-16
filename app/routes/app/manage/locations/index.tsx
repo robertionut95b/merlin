@@ -11,7 +11,6 @@ import {
   mapFiltersToQueryParams,
   mapQueryParamsToFilters,
 } from "src/remix/remix-routes";
-import { DateTimeColumnFilter } from "~/components/tables/filters";
 import Table from "~/components/tables/Table";
 import { getLocationsWithPagination } from "~/models/locations.server";
 

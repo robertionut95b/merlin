@@ -8,8 +8,13 @@ import {
   useRowSelect,
   useTable,
 } from "react-table";
-import { dateEqualsFilterFn, DefaultColumnFilter, textFilter } from "./filters";
-import { dateBetweenFilterFn } from "./filters/dateBetweenFilterFn";
+import {
+  filterSetToTableFilters,
+  filterSetToURLSearchParams,
+  URLtoFilterSet,
+} from "src/remix/filters.remix.utils";
+import type { TableFilter } from "./filters/filters.types";
+import StringFilter from "./filters/StringFilter";
 import { TableCheckbox } from "./TableCheckbox";
 import { TablePagination } from "./TablePagination";
 import { TableRowActions } from "./TableRowActions";
@@ -59,7 +64,6 @@ const Table = <T,>({
 }: ITableProps<T>): JSX.Element => {
   const tableData = useMemo(() => data, [data]);
   const tableColumns = useMemo(() => columns, [columns]);
-  const [page, setPage] = useState<number>(pagination?.initialPage || 1);
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -67,49 +71,42 @@ const Table = <T,>({
   const {
     onPageChange = (p: number) =>
       setSearchParams({ ...Object.fromEntries(searchParams), p: p.toString() }),
+    initialPage = parseInt(searchParams.get("p") || "1"),
   } = pagination || {};
+
+  const [page, setPage] = useState<number>(initialPage || 1);
 
   const {
     // @ts-expect-error("react-table-types")
     onView = (row: T) => navigate(`${pathname}/${row?.id}`),
-    // @ts-expect-error("react-table-types")
+    // @ts-expect-error("react-table-types")0
     onEdit = (row: T) => navigate(`${pathname}/${row?.id}/edit`),
   } = selection || {};
 
-  const { onCreate = () => navigate(`${pathname}/new`) } = manipulation || {};
-
-  const filterTypes = useMemo(
-    () => ({
-      text: textFilter,
-      dateBetween: dateBetweenFilterFn,
-      dateEquals: dateEqualsFilterFn,
-    }),
-    []
-  );
+  const {
+    onCreate = () => navigate(`${pathname}/new`),
+    clearFilters = () => navigate(pathname, { replace: true }),
+    onFilters = (filterSet: TableFilter[], _globalFilter: string) => {
+      const urlParams = filterSetToURLSearchParams(filterSet);
+      return setSearchParams({
+        ...searchParams,
+        ...Object.fromEntries(urlParams),
+      });
+    },
+    defaultFilters = {
+      filters: filterSetToTableFilters(URLtoFilterSet(searchParams.toString())),
+    },
+  } = manipulation || {};
 
   const defaultColumn = useMemo(
     () => ({
-      Filter: DefaultColumnFilter,
+      Filter: StringFilter,
+      filter: "stringFilter",
     }),
     []
   );
 
-  const plugins = [
-    manipulation?.onFilters && manipulation?.defaultFilters
-      ? useGlobalFilter
-      : undefined,
-    manipulation?.onFilters ? useFilters : undefined,
-    useRowSelect,
-  ].filter(Boolean);
-
-  const defaultFiltersState = manipulation?.defaultFilters
-    ? {
-        filters:
-          manipulation?.defaultFilters?.length === 0
-            ? []
-            : manipulation?.defaultFilters,
-      }
-    : undefined;
+  const plugins = [useGlobalFilter, useFilters, useRowSelect];
 
   const instance = useTable(
     {
@@ -118,13 +115,12 @@ const Table = <T,>({
       data: tableData,
       // @ts-expect-error("react-table-types")
       defaultColumn: defaultColumn,
-      filterTypes: filterTypes,
       defaultCanFilter: false,
       manualFilters: true,
       manualGlobalFilter: true,
       // @ts-expect-error("react-table-types")
       initialState: {
-        ...defaultFiltersState,
+        ...defaultFilters,
       },
     },
     ...plugins,
@@ -180,14 +176,8 @@ const Table = <T,>({
     state: { selectedRowIds, filters, globalFilter },
   } = instance;
 
-  useEffect(() => {
-    if (filters?.length > 0 || globalFilter) {
-      if (manipulation) {
-        manipulation.onFilters?.(filters, globalFilter);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, globalFilter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => onFilters(filters, globalFilter), [filters, globalFilter]);
 
   return (
     <div>
@@ -197,6 +187,7 @@ const Table = <T,>({
           setPage={setPage}
           {...manipulation}
           onCreate={onCreate}
+          clearFilters={clearFilters}
         />
       )}
       <MantineTable
@@ -212,6 +203,8 @@ const Table = <T,>({
               {headerGroup.headers.map((column, jdx) => (
                 <th {...column.getHeaderProps()} key={jdx}>
                   {column.render("Header")}
+                  {/* @ts-expect-error("react-table-types") */}
+                  {column.canFilter ? column.render("Filter") : null}
                 </th>
               ))}
             </tr>
@@ -232,6 +225,11 @@ const Table = <T,>({
               </tr>
             );
           })}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={tableColumns.length + 2}>No data</td>
+            </tr>
+          )}
         </tbody>
         <caption>
           <div

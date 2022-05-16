@@ -1,4 +1,4 @@
-import { Transition } from "@remix-run/react/transition";
+import type { Transition } from "@remix-run/react/transition";
 
 export function isAdding(transition: Transition): boolean {
   return (

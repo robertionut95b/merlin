@@ -3,20 +3,12 @@ import type { Permission } from "@prisma/client";
 import { ActionType } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import {
-  Outlet,
-  useLoaderData,
-  useLocation,
-  useNavigate,
-} from "@remix-run/react";
+import { Outlet, useLoaderData } from "@remix-run/react";
 import { format, parseISO } from "date-fns";
-import type { Column } from "react-table";
+import type { Column, UseFiltersColumnOptions } from "react-table";
 import { IsAllowedAccess } from "src/helpers/remix.rbac";
-import {
-  mapFiltersToQueryParams,
-  mapQueryParamsToFilters,
-} from "src/remix/remix-routes";
 import DataAlert from "~/components/layout/DataAlert";
+import DateFilter from "~/components/tables/filters/DateFilter";
 import Table from "~/components/tables/Table";
 import { getPermissionsWithPagination } from "~/models/permission.server";
 
@@ -41,6 +33,16 @@ export const loader: LoaderFunction = async ({ request }) => {
   const pageSize = 10;
   const page = parseInt(queryParams.get("p") || "0");
   const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
+
+  const roleName = queryParams.get("Role.name") || undefined;
+  const [, roleNameOperator = "contains", roleNameValue] =
+    roleName?.split(":") || [];
+
+  const createdAt = queryParams.get("createdAt") || undefined;
+  const [, createdAtOperator = "equals", createdAtValue] =
+    createdAt?.split(":") || [];
+  const updatedAt = queryParams.get("updatedAt") || undefined;
+
   const { paginationMeta, permissions } = await getPermissionsWithPagination({
     take: pageSize,
     skip,
@@ -55,7 +57,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       action: actionTypeFilter,
       Role: {
         name: {
-          contains: queryParams.get("Role.name") || undefined,
+          [roleNameOperator]: roleNameValue,
           mode: "insensitive",
         },
       },
@@ -82,7 +84,7 @@ const PermissionsPage = (): JSX.Element => {
     pageSize: number;
     pageCount: number;
   }>();
-  const permsColumns: Column[] = [
+  const permsColumns: (Column & UseFiltersColumnOptions<object>)[] = [
     {
       Header: "Id",
       accessor: "id",
@@ -108,16 +110,18 @@ const PermissionsPage = (): JSX.Element => {
       Header: "Created",
       accessor: "createdAt",
       Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+      Filter: DateFilter,
+      filter: "dateFilter",
     },
     {
       Header: "Updated",
       accessor: "updatedAt",
       Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+      Filter: DateFilter,
+      filter: "dateFilter",
     },
   ];
 
-  const navigate = useNavigate();
-  const { pathname, search } = useLocation();
   const modals = useModals();
 
   return (
@@ -137,23 +141,12 @@ const PermissionsPage = (): JSX.Element => {
           columns={permsColumns}
           data={permissions}
           pagination={{
-            initialPage: parseInt(new URLSearchParams(search).get("p") || "1"),
             pageSize,
             pageCount,
             total,
           }}
-          manipulation={{
-            onCreate: () => navigate(`${pathname}/new`, { replace: true }),
-            onFilters: (filters, _globalFilter) => {
-              return navigate(mapFiltersToQueryParams(pathname, filters), {
-                replace: true,
-              });
-            },
-            defaultFilters: mapQueryParamsToFilters(search),
-            clearFilters: () => navigate(pathname, { replace: true }),
-          }}
           selection={{
-            onDelete: (row) =>
+            onDelete: (_row) =>
               modals.openConfirmModal({
                 title: "Delete Permission",
                 centered: true,

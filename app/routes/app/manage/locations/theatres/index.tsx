@@ -1,18 +1,18 @@
 import { useModals } from "@mantine/modals";
-import type { Theatre } from "@prisma/client";
+import type { Location, Theatre } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useLocation, useNavigate } from "@remix-run/react";
-import { format, parseISO } from "date-fns";
+import { useLoaderData } from "@remix-run/react";
+import { addDays, format, parseISO } from "date-fns";
 import type { Column } from "react-table";
+import { isValidDate } from "src/helpers/dates";
 import { IsAllowedAccess } from "src/helpers/remix.rbac";
-import { getStartedAtEndAtDates } from "src/remix/dates";
-import {
-  mapFiltersToQueryParams,
-  mapQueryParamsToFilters,
-} from "src/remix/remix-routes";
-import { DateTimeColumnFilter } from "~/components/tables/filters";
+import DataAlert from "~/components/layout/DataAlert";
+import DateFilter from "~/components/tables/filters/DateFilter";
+import type { UseFiltersColumnOptionsWithOptionsList } from "~/components/tables/filters/filters.types";
+import { SelectFilter } from "~/components/tables/filters/SelectFilter";
 import Table from "~/components/tables/Table";
+import { getLocations } from "~/models/locations.server";
 import { getTheatresWithPagination } from "~/models/theatre.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -28,12 +28,28 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const url = new URL(request.url);
   const queryParams = url.searchParams;
-  const [createdAtStart, endAtStart] = getStartedAtEndAtDates(
-    queryParams.get("createdAt")
-  );
-  const [updatedAtStart, updatedEndAtStart] = getStartedAtEndAtDates(
-    queryParams.get("updatedAt")
-  );
+
+  // filters area
+  const id = queryParams.get("id") || undefined;
+  const [, idOperator = "contains", idValue] = id?.split(":") || [];
+  const name = queryParams.get("name") || undefined;
+  const [, nameOperator = "contains", nameValue] = name?.split(":") || [];
+  const createdAt = queryParams.get("createdAt") || undefined;
+  const [, createdAtOperator, createdAtValue] = createdAt?.split(":") || [];
+  const updatedAt = queryParams.get("updatedAt") || undefined;
+  const [, updatedAtOperator, updatedAtValue] = updatedAt?.split(":") || [];
+  const locationName = queryParams.get("location.name") || undefined;
+  const [, locationNameOperator = "contains", locationNameValue] =
+    locationName?.split(":") || [];
+
+  const createdAtDate =
+    createdAt && isValidDate(new Date(createdAt))
+      ? new Date(createdAtValue)
+      : undefined;
+  const updatedAtDate =
+    updatedAt && isValidDate(new Date(updatedAt))
+      ? new Date(updatedAtValue)
+      : undefined;
 
   const pageSize = 10;
   const page = parseInt(queryParams.get("p") || "0");
@@ -43,24 +59,25 @@ export const loader: LoaderFunction = async ({ request }) => {
     skip,
     where: {
       id: {
-        contains: queryParams.get("id") || undefined,
+        [idOperator]: idValue,
         mode: "insensitive",
       },
       name: {
-        contains: queryParams.get("name") || undefined,
+        [nameOperator]: nameValue,
         mode: "insensitive",
       },
       createdAt: {
-        gte: createdAtStart,
-        lt: endAtStart,
+        ...(createdAtOperator === "equals" && { gte: createdAtDate }),
+        ...(createdAtOperator === "equals" && {
+          lt: addDays(createdAtDate, 1),
+        }),
       },
       updatedAt: {
-        gte: updatedAtStart,
-        lt: updatedEndAtStart,
+        [updatedAtOperator]: updatedAtDate,
       },
       location: {
         name: {
-          contains: queryParams.get("location.name") || undefined,
+          [locationNameOperator]: locationNameValue,
           mode: "insensitive",
         },
       },
@@ -70,30 +87,31 @@ export const loader: LoaderFunction = async ({ request }) => {
     },
   });
   const pageCount = Math.ceil(paginationMeta.total / pageSize);
+  const locations = await getLocations();
 
   return json({
     theatres,
     total: paginationMeta.total,
+    locations,
     pageSize,
     pageCount,
   });
 };
 
 const TheatresPage = (): JSX.Element => {
-  const navigate = useNavigate();
-  const { pathname, search } = useLocation();
   const modals = useModals();
 
-  const { pageCount, pageSize, theatres, total } = useLoaderData<{
+  const { pageCount, pageSize, theatres, total, locations } = useLoaderData<{
     theatres: (Theatre & {
       location: Location;
     })[];
+    locations: Location[];
     total: number;
     pageSize: number;
     pageCount: number;
   }>();
 
-  const columns: Column[] = [
+  const columns: (Column & UseFiltersColumnOptionsWithOptionsList<object>)[] = [
     {
       Header: "Id",
       accessor: "id",
@@ -105,22 +123,22 @@ const TheatresPage = (): JSX.Element => {
     {
       Header: "Location",
       accessor: "location.name",
+      Filter: SelectFilter,
+      options: locations.map((l) => ({ label: l.name, value: l.name })),
     },
     {
       Header: "Created",
       accessor: "createdAt",
       Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-      // @ts-expect-error("react-table-types")
-      Filter: DateTimeColumnFilter,
-      filter: "dateEquals",
+      Filter: DateFilter,
+      filter: "dateFilter",
     },
     {
       Header: "Updated",
       accessor: "updatedAt",
       Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-      // @ts-expect-error("react-table-types")
-      Filter: DateTimeColumnFilter,
-      filter: "dateEquals",
+      Filter: DateFilter,
+      filter: "dateFilter",
     },
   ];
   return (
@@ -140,24 +158,12 @@ const TheatresPage = (): JSX.Element => {
           columns={columns}
           data={theatres}
           pagination={{
-            initialPage: parseInt(new URLSearchParams(search).get("p") || "1"),
             pageSize,
             pageCount,
             total,
           }}
-          manipulation={{
-            onCreate: () => navigate(`${pathname}/new`, { replace: true }),
-            onFilters: (filters, _globalFilter) =>
-              navigate(mapFiltersToQueryParams(pathname, filters), {
-                replace: true,
-              }),
-            defaultFilters: mapQueryParamsToFilters(search),
-            clearFilters: () => navigate(pathname, { replace: true }),
-          }}
           selection={{
-            onView: (row) => navigate(`${pathname}/${row.id}`),
-            onEdit: (row) => navigate(`${pathname}/${row.id}/edit`),
-            onDelete: (row) =>
+            onDelete: (_row) =>
               modals.openConfirmModal({
                 title: "Delete Role",
                 centered: true,
@@ -197,5 +203,9 @@ const TheatresPage = (): JSX.Element => {
     </>
   );
 };
+
+export function ErrorBoundary(): JSX.Element {
+  return <DataAlert message="Could not load theatres data" />;
+}
 
 export default TheatresPage;

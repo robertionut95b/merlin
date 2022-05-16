@@ -2,17 +2,13 @@ import { useModals } from "@mantine/modals";
 import type { Role } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useLocation, useNavigate } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
 import type { Column } from "react-table";
 import { IsAllowedAccess } from "src/helpers/remix.rbac";
-import {
-  mapFiltersToQueryParams,
-  mapQueryParamsToFilters,
-} from "src/remix/remix-routes";
 import DataAlert from "~/components/layout/DataAlert";
-import { DateTimeColumnFilter } from "~/components/tables/filters";
+import DateFilter from "~/components/tables/filters/DateFilter";
 import Table from "~/components/tables/Table";
 import { getRolesWithPagination } from "~/models/role.server";
 import { getStartedAtEndAtDates } from "../../../../../../src/remix/dates";
@@ -101,21 +97,19 @@ export const RolesPage = (): JSX.Element => {
       accessor: "createdAt",
       Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
       // @ts-expect-error("react-table-types")
-      Filter: DateTimeColumnFilter,
-      filter: "dateEquals",
+      Filter: DateFilter,
+      filter: "dateFilter",
     },
     {
       Header: "Updated",
       accessor: "updatedAt",
       Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
       // @ts-expect-error("react-table-types")
-      Filter: DateTimeColumnFilter,
-      filter: "dateEquals",
+      Filter: DateFilter,
+      filter: "dateFilter",
     },
   ];
 
-  const { pathname, search } = useLocation();
-  const navigate = useNavigate();
   const modals = useModals();
 
   return (
@@ -135,26 +129,12 @@ export const RolesPage = (): JSX.Element => {
           className="rounded-lg border border-gray-200"
           columns={rolesColumns}
           data={roles}
-          manipulation={{
-            onCreate: () => navigate(`${pathname}/new`, { replace: true }),
-            onFilters: (filters, _globalFilter) =>
-              navigate(mapFiltersToQueryParams(pathname, filters), {
-                replace: true,
-              }),
-            defaultFilters: mapQueryParamsToFilters(search),
-            clearFilters: () => navigate(pathname, { replace: true }),
-          }}
           pagination={{
-            initialPage: parseInt(new URLSearchParams(search).get("p") || "1"),
             pageSize,
             pageCount,
             total,
-            onPageChange: (page: number) => navigate(`?p=${page}`),
           }}
           selection={{
-            onView: (row) => navigate(`/app/manage/access/roles/${row.id}`),
-            onEdit: (row) =>
-              navigate(`/app/manage/access/roles/${row.id}/edit`),
             onDelete: (row) =>
               modals.openConfirmModal({
                 title: "Delete Role",

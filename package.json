@@ -85,7 +85,7 @@
     "@types/morgan": "^1.9.3",
     "@types/react": "^17.0.43",
     "@types/react-dom": "^17.0.14",
-    "@types/react-table": "^7.7.10",
+    "@types/react-table": "^7.7.12",
     "@types/uuid": "^8.3.4",
     "@vitejs/plugin-react": "^1.2.0",
     "c8": "^7.11.0",
