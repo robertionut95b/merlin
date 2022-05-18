@@ -242,3 +242,35 @@ model Ticket {
   /// @zod.optional()
   updatedAt        DateTime       @updatedAt
 }
+
+enum RepositoryStatus {
+  Active
+  Inactive
+}
+
+model Repository {
+  id        String           @id @default(cuid())
+  version   Float
+  status    RepositoryStatus
+  /// @zod.optional()
+  createdAt DateTime         @default(now())
+  /// @zod.optional()
+  updatedAt DateTime         @updatedAt
+}
+
+enum SettingsCategory {
+  General
+  Security
+  Locales
+}
+
+model ApplicationSettings {
+  id        String           @id @default(cuid())
+  category  SettingsCategory
+  key       String
+  value     String
+  /// @zod.optional()
+  createdAt DateTime         @default(now())
+  /// @zod.optional()
+  updatedAt DateTime         @updatedAt
+}
