@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { useState } from "react";
 import type { UseFiltersColumnProps } from "react-table";
 import { isValidDate } from "../../../../src/helpers/dates";
-import { FilterSvg } from "../TableIcons";
+import { CalendarSVG, FilterSvg } from "../TableIcons";
 import type { FilterState } from "./filters.types";
 import { OperatorValues } from "./filters.types";
 
@@ -80,6 +80,7 @@ const DateFilter = <T,>(props: {
         placeholder="Pick date"
         mb="sm"
         withinPortal={false}
+        icon={<CalendarSVG />}
         value={
           typeof state.value === "string"
             ? state.value !== ""

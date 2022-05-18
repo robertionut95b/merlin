@@ -1,12 +1,14 @@
 import { useModals } from "@mantine/modals";
 import type { Location, Theatre } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { addDays, format, parseISO } from "date-fns";
+import { useMemo } from "react";
 import type { Column } from "react-table";
-import { isValidDate } from "src/helpers/dates";
-import { IsAllowedAccess } from "src/helpers/remix.rbac";
+import { validDateOrUndefined } from "src/helpers/dates";
+import { getResourceFiltersOperatorValue } from "src/helpers/remix-action-loaders";
+import { authorizationLoader } from "src/helpers/remix.rbac";
 import DataAlert from "~/components/layout/DataAlert";
 import DateFilter from "~/components/tables/filters/DateFilter";
 import type { UseFiltersColumnOptionsWithOptionsList } from "~/components/tables/filters/filters.types";
@@ -15,86 +17,79 @@ import Table from "~/components/tables/Table";
 import { getLocations } from "~/models/locations.server";
 import { getTheatresWithPagination } from "~/models/theatre.server";
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const access = await IsAllowedAccess({
-    request,
+export const loader: LoaderFunction = async (args) => {
+  return authorizationLoader({
+    ...args,
     actions: ["Read", "All"],
     objects: ["Theatre", "All"],
-  });
+    loader: async (arg) => {
+      const { request } = arg;
+      const url = new URL(request.url);
+      const queryParams = url.searchParams;
 
-  if (!access) {
-    return redirect("/app");
-  }
+      // filters area
+      const filters = getResourceFiltersOperatorValue(request);
+      const [idOp, idV] = filters.get("id");
+      const [nameOp, nameV] = filters.get("name");
+      const [locOp, locV] = filters.get("location");
+      const [createdOp, createdV] = filters.get("createdAt");
+      const [updatedOp, updatedV] = filters.get("updatedAt");
+      const createdAtDate = validDateOrUndefined(createdV);
+      const updatedAtDate = validDateOrUndefined(updatedV);
 
-  const url = new URL(request.url);
-  const queryParams = url.searchParams;
+      const pageSize = 10;
+      const page = parseInt(queryParams.get("p") || "0");
+      const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
 
-  // filters area
-  const id = queryParams.get("id") || undefined;
-  const [, idOperator = "contains", idValue] = id?.split(":") || [];
-  const name = queryParams.get("name") || undefined;
-  const [, nameOperator = "contains", nameValue] = name?.split(":") || [];
-  const createdAt = queryParams.get("createdAt") || undefined;
-  const [, createdAtOperator, createdAtValue] = createdAt?.split(":") || [];
-  const updatedAt = queryParams.get("updatedAt") || undefined;
-  const [, updatedAtOperator, updatedAtValue] = updatedAt?.split(":") || [];
-  const locationName = queryParams.get("location.name") || undefined;
-  const [, locationNameOperator = "contains", locationNameValue] =
-    locationName?.split(":") || [];
-
-  const createdAtDate =
-    createdAt && isValidDate(new Date(createdAt))
-      ? new Date(createdAtValue)
-      : undefined;
-  const updatedAtDate =
-    updatedAt && isValidDate(new Date(updatedAt))
-      ? new Date(updatedAtValue)
-      : undefined;
-
-  const pageSize = 10;
-  const page = parseInt(queryParams.get("p") || "0");
-  const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
-  const { paginationMeta, theatres } = await getTheatresWithPagination({
-    take: pageSize,
-    skip,
-    where: {
-      id: {
-        [idOperator]: idValue,
-        mode: "insensitive",
-      },
-      name: {
-        [nameOperator]: nameValue,
-        mode: "insensitive",
-      },
-      createdAt: {
-        ...(createdAtOperator === "equals" && { gte: createdAtDate }),
-        ...(createdAtOperator === "equals" && {
-          lt: addDays(createdAtDate, 1),
-        }),
-      },
-      updatedAt: {
-        [updatedAtOperator]: updatedAtDate,
-      },
-      location: {
-        name: {
-          [locationNameOperator]: locationNameValue,
-          mode: "insensitive",
+      const {
+        paginationMeta: { total },
+        theatres,
+      } = await getTheatresWithPagination({
+        take: pageSize,
+        skip,
+        where: {
+          id: {
+            [idOp]: idV,
+            mode: "insensitive",
+          },
+          name: {
+            [nameOp]: nameV,
+            mode: "insensitive",
+          },
+          createdAt: {
+            ...(createdOp === "equals" && { gte: createdAtDate }),
+            ...(createdOp === "equals" && {
+              lt: addDays(createdAtDate as Date, 1),
+            }),
+          },
+          updatedAt: {
+            ...(updatedOp === "equals" && { gte: updatedAtDate }),
+            ...(updatedOp === "equals" && {
+              lt: addDays(updatedAtDate as Date, 1),
+            }),
+          },
+          location: {
+            name: {
+              [locOp]: locV,
+              mode: "insensitive",
+            },
+          },
         },
-      },
-    },
-    include: {
-      location: true,
-    },
-  });
-  const pageCount = Math.ceil(paginationMeta.total / pageSize);
-  const locations = await getLocations();
+        include: {
+          location: true,
+        },
+      });
+      const pageCount = Math.ceil(total / pageSize);
+      const locations = await getLocations();
 
-  return json({
-    theatres,
-    total: paginationMeta.total,
-    locations,
-    pageSize,
-    pageCount,
+      return json({
+        theatres,
+        total,
+        locations,
+        pageSize,
+        pageCount,
+      });
+    },
   });
 };
 
@@ -111,36 +106,43 @@ const TheatresPage = (): JSX.Element => {
     pageCount: number;
   }>();
 
-  const columns: (Column & UseFiltersColumnOptionsWithOptionsList<object>)[] = [
-    {
-      Header: "Id",
-      accessor: "id",
-    },
-    {
-      Header: "Name",
-      accessor: "name",
-    },
-    {
-      Header: "Location",
-      accessor: "location.name",
-      Filter: SelectFilter,
-      options: locations.map((l) => ({ label: l.name, value: l.name })),
-    },
-    {
-      Header: "Created",
-      accessor: "createdAt",
-      Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-      Filter: DateFilter,
-      filter: "dateFilter",
-    },
-    {
-      Header: "Updated",
-      accessor: "updatedAt",
-      Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-      Filter: DateFilter,
-      filter: "dateFilter",
-    },
-  ];
+  const t = useMemo(() => theatres, [theatres]);
+  const l = useMemo(() => locations, [locations]);
+  const columns: (Column & UseFiltersColumnOptionsWithOptionsList<object>)[] =
+    useMemo(
+      () => [
+        {
+          Header: "Id",
+          accessor: "id",
+        },
+        {
+          Header: "Name",
+          accessor: "name",
+        },
+        {
+          Header: "Location",
+          accessor: "location.name",
+          Filter: SelectFilter,
+          options: l.map((l) => ({ label: l.name, value: l.name })),
+        },
+        {
+          Header: "Created",
+          accessor: "createdAt",
+          Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+          Filter: DateFilter,
+          filter: "dateFilter",
+        },
+        {
+          Header: "Updated",
+          accessor: "updatedAt",
+          Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+          Filter: DateFilter,
+          filter: "dateFilter",
+        },
+      ],
+      [locations]
+    );
+
   return (
     <>
       <div className="header">
@@ -156,7 +158,7 @@ const TheatresPage = (): JSX.Element => {
       <div className="theatres">
         <Table
           columns={columns}
-          data={theatres}
+          data={t}
           pagination={{
             pageSize,
             pageCount,

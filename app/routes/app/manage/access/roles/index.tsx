@@ -1,74 +1,86 @@
 import { useModals } from "@mantine/modals";
 import type { Role } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { addDays } from "date-fns";
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
 import type { Column } from "react-table";
-import { IsAllowedAccess } from "src/helpers/remix.rbac";
+import { validDateOrUndefined } from "src/helpers/dates";
+import { getResourceFiltersOperatorValue } from "src/helpers/remix-action-loaders";
+import { authorizationLoader } from "src/helpers/remix.rbac";
 import DataAlert from "~/components/layout/DataAlert";
 import DateFilter from "~/components/tables/filters/DateFilter";
 import Table from "~/components/tables/Table";
 import { getRolesWithPagination } from "~/models/role.server";
-import { getStartedAtEndAtDates } from "../../../../../../src/remix/dates";
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const access = await IsAllowedAccess({
-    request,
+export const loader: LoaderFunction = async (args) => {
+  return authorizationLoader({
+    ...args,
     actions: ["Read", "All"],
     objects: ["Role", "All"],
-  });
+    loader: async (arg) => {
+      const { request } = arg;
 
-  if (!access) {
-    return redirect("/app");
-  }
+      const url = new URL(request.url);
+      const queryParams = url.searchParams;
 
-  const url = new URL(request.url);
-  const queryParams = url.searchParams;
-  const [createdAtStart, endAtStart] = getStartedAtEndAtDates(
-    queryParams.get("createdAt")
-  );
-  const [updatedAtStart, updatedEndAtStart] = getStartedAtEndAtDates(
-    queryParams.get("updatedAt")
-  );
+      // filters
+      const filters = getResourceFiltersOperatorValue(request);
+      const [idOp, idV] = filters.get("id");
+      const [nameOp, nameV] = filters.get("name");
+      const [descOp, descV] = filters.get("description");
+      const [createdOp, createdV] = filters.get("createdAt");
+      const [updatedOp, updatedV] = filters.get("updatedAt");
+      const createdAtDate = validDateOrUndefined(createdV);
+      const updatedAtDate = validDateOrUndefined(updatedV);
 
-  const pageSize = 10;
-  const page = parseInt(queryParams.get("p") || "0");
-  const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
-  const { paginationMeta, roles } = await getRolesWithPagination({
-    take: pageSize,
-    skip,
-    where: {
-      id: {
-        contains: queryParams.get("id") || undefined,
-        mode: "insensitive",
-      },
-      name: {
-        contains: queryParams.get("name") || undefined,
-        mode: "insensitive",
-      },
-      description: {
-        contains: queryParams.get("description") || undefined,
-        mode: "insensitive",
-      },
-      createdAt: {
-        gte: createdAtStart,
-        lt: endAtStart,
-      },
-      updatedAt: {
-        gte: updatedAtStart,
-        lt: updatedEndAtStart,
-      },
+      const pageSize = 10;
+      const page = parseInt(queryParams.get("p") || "0");
+      const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
+      const {
+        paginationMeta: { total },
+        roles,
+      } = await getRolesWithPagination({
+        take: pageSize,
+        skip,
+        where: {
+          id: {
+            [idOp]: idV,
+            mode: "insensitive",
+          },
+          name: {
+            [nameOp]: nameV,
+            mode: "insensitive",
+          },
+          description: {
+            [descOp]: descV,
+            mode: "insensitive",
+          },
+          createdAt: {
+            ...(createdOp === "equals" && { gte: createdAtDate }),
+            ...(createdOp === "equals" && {
+              lt: addDays(createdAtDate as Date, 1),
+            }),
+          },
+          updatedAt: {
+            ...(updatedOp === "equals" && { gte: updatedAtDate }),
+            ...(updatedOp === "equals" && {
+              lt: addDays(updatedAtDate as Date, 1),
+            }),
+          },
+        },
+      });
+      const pageCount = Math.ceil(total / pageSize);
+
+      return json({
+        roles,
+        total,
+        pageSize,
+        pageCount,
+      });
     },
-  });
-  const pageCount = Math.ceil(paginationMeta.total / pageSize);
-
-  return json({
-    roles,
-    total: paginationMeta.total,
-    pageSize,
-    pageCount,
   });
 };
 

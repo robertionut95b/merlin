@@ -1,75 +1,104 @@
 import { useModals } from "@mantine/modals";
 import type { Permission } from "@prisma/client";
-import { ActionType } from "@prisma/client";
+import { ActionType, ObjectType } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
-import { format, parseISO } from "date-fns";
-import type { Column, UseFiltersColumnOptions } from "react-table";
-import { IsAllowedAccess } from "src/helpers/remix.rbac";
+import { addDays, format, parseISO } from "date-fns";
+import { useMemo } from "react";
+import type { Column } from "react-table";
+import { validDateOrUndefined } from "src/helpers/dates";
+import { getResourceFiltersOperatorValue } from "src/helpers/remix-action-loaders";
+import { authorizationLoader } from "src/helpers/remix.rbac";
 import DataAlert from "~/components/layout/DataAlert";
 import DateFilter from "~/components/tables/filters/DateFilter";
+import type { UseFiltersColumnOptionsWithOptionsList } from "~/components/tables/filters/filters.types";
+import { SelectFilter } from "~/components/tables/filters/SelectFilter";
 import Table from "~/components/tables/Table";
 import { getPermissionsWithPagination } from "~/models/permission.server";
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const access = await IsAllowedAccess({
-    request,
+export const loader: LoaderFunction = async (args) => {
+  return authorizationLoader({
+    ...args,
     actions: ["Read", "All"],
     objects: ["Permission", "All"],
-  });
+    loader: async (arg) => {
+      const { request } = arg;
+      const url = new URL(request.url);
+      const queryParams = url.searchParams;
 
-  if (!access) {
-    return redirect("/app");
-  }
+      const filters = getResourceFiltersOperatorValue(request);
+      const [idOp, idV] = filters.get("id");
+      const [roleNameOp, roleNameV] = filters.get("Role.name");
+      const [objectOp, objectV] = filters.get("objectType");
+      const [actionOp, actionV] = filters.get("action");
+      const [allowedOp, allowedV] = filters.get("allowed");
+      const [createdOp, createdV] = filters.get("createdAt");
+      const [updatedOp, updatedV] = filters.get("updatedAt");
+      const createdAt = validDateOrUndefined(createdV);
+      const updatedAt = validDateOrUndefined(updatedV);
 
-  const url = new URL(request.url);
-  const queryParams = url.searchParams;
+      const pageSize = 10;
+      const page = parseInt(queryParams.get("p") || "0");
+      const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
 
-  const actionTypeFilter =
-    ActionType[(queryParams.get("action") || "") as keyof typeof ActionType] ||
-    undefined;
-
-  const pageSize = 10;
-  const page = parseInt(queryParams.get("p") || "0");
-  const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
-
-  const roleName = queryParams.get("Role.name") || undefined;
-  const [, roleNameOperator = "contains", roleNameValue] =
-    roleName?.split(":") || [];
-
-  const createdAt = queryParams.get("createdAt") || undefined;
-  const [, createdAtOperator = "equals", createdAtValue] =
-    createdAt?.split(":") || [];
-  const updatedAt = queryParams.get("updatedAt") || undefined;
-
-  const { paginationMeta, permissions } = await getPermissionsWithPagination({
-    take: pageSize,
-    skip,
-    include: {
-      Role: {
-        select: {
-          name: true,
+      const {
+        paginationMeta: { total },
+        permissions,
+      } = await getPermissionsWithPagination({
+        take: pageSize,
+        skip,
+        include: {
+          Role: {
+            select: {
+              name: true,
+            },
+          },
         },
-      },
-    },
-    where: {
-      action: actionTypeFilter,
-      Role: {
-        name: {
-          [roleNameOperator]: roleNameValue,
-          mode: "insensitive",
+        where: {
+          id: {
+            [idOp]: idV,
+            mode: "insensitive",
+          },
+          action: {
+            [actionOp]: actionV,
+          },
+          Role: {
+            name: {
+              [roleNameOp]: roleNameV,
+              mode: "insensitive",
+            },
+          },
+          objectType: {
+            [objectOp]: objectV,
+          },
+          allowed: {
+            [allowedOp]:
+              allowedV === undefined ? undefined : allowedV === "true",
+          },
+          createdAt: {
+            ...(createdOp === "equals" && { gte: createdAt }),
+            ...(updatedOp === "equals" && {
+              lt: addDays(createdAt as Date, 1),
+            }),
+          },
+          updatedAt: {
+            ...(updatedOp === "equals" && { gte: updatedAt }),
+            ...(updatedOp === "equals" && {
+              lt: addDays(updatedAt as Date, 1),
+            }),
+          },
         },
-      },
-    },
-  });
-  const pageCount = Math.ceil(paginationMeta.total / pageSize);
+      });
+      const pageCount = Math.ceil(total / pageSize);
 
-  return json({
-    permissions,
-    total: paginationMeta.total,
-    pageSize,
-    pageCount,
+      return json({
+        permissions,
+        total,
+        pageSize,
+        pageCount,
+      });
+    },
   });
 };
 
@@ -84,43 +113,58 @@ const PermissionsPage = (): JSX.Element => {
     pageSize: number;
     pageCount: number;
   }>();
-  const permsColumns: (Column & UseFiltersColumnOptions<object>)[] = [
-    {
-      Header: "Id",
-      accessor: "id",
-    },
-    {
-      Header: "Role",
-      accessor: "Role.name",
-    },
-    {
-      Header: "Object",
-      accessor: "objectType",
-    },
-    {
-      Header: "Action",
-      accessor: "action",
-    },
-    {
-      Header: "Allowed",
-      accessor: "allowed",
-      Cell: (row: any) => (row.value ? "Yes" : "No"),
-    },
-    {
-      Header: "Created",
-      accessor: "createdAt",
-      Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-      Filter: DateFilter,
-      filter: "dateFilter",
-    },
-    {
-      Header: "Updated",
-      accessor: "updatedAt",
-      Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-      Filter: DateFilter,
-      filter: "dateFilter",
-    },
-  ];
+
+  const data = useMemo(() => permissions, [permissions]);
+  const permsColumns: (Column &
+    UseFiltersColumnOptionsWithOptionsList<object>)[] = useMemo(
+    () => [
+      {
+        Header: "Id",
+        accessor: "id",
+      },
+      {
+        Header: "Role",
+        accessor: "Role.name",
+      },
+      {
+        Header: "Object",
+        accessor: "objectType",
+        Filter: SelectFilter,
+        options: Object.keys(ObjectType).map((k) => ({ value: k, label: k })),
+      },
+      {
+        Header: "Action",
+        accessor: "action",
+        Filter: SelectFilter,
+        options: Object.keys(ActionType).map((k) => ({ value: k, label: k })),
+      },
+      {
+        Header: "Allowed",
+        accessor: "allowed",
+        Cell: (row: any) => (row.value ? "Yes" : "No"),
+        Filter: SelectFilter,
+        options: [
+          { value: "true", label: "Yes" },
+          { value: "false", label: "No" },
+        ],
+      },
+      {
+        Header: "Created",
+        accessor: "createdAt",
+        Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+        Filter: DateFilter,
+        filter: "dateFilter",
+      },
+      {
+        Header: "Updated",
+        accessor: "updatedAt",
+        Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+        Filter: DateFilter,
+        filter: "dateFilter",
+      },
+    ],
+    []
+  );
 
   const modals = useModals();
 
@@ -139,7 +183,7 @@ const PermissionsPage = (): JSX.Element => {
       <div className="permissions">
         <Table
           columns={permsColumns}
-          data={permissions}
+          data={data}
           pagination={{
             pageSize,
             pageCount,

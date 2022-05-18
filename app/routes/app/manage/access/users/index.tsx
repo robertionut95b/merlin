@@ -2,15 +2,15 @@ import { useModals } from "@mantine/modals";
 import type { User } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useLocation, useNavigate } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
+import { addDays } from "date-fns";
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
+import { useMemo } from "react";
 import type { Column } from "react-table";
+import { validDateOrUndefined } from "src/helpers/dates";
+import { getResourceFiltersOperatorValue } from "src/helpers/remix-action-loaders";
 import { authorizationLoader } from "src/helpers/remix.rbac";
-import {
-  mapFiltersToQueryParams,
-  mapQueryParamsToFilters,
-} from "src/remix/remix-routes";
 import DataAlert from "~/components/layout/DataAlert";
 import Table from "~/components/tables/Table";
 import { getUsersWithPagination } from "~/models/user.server";
@@ -24,18 +24,58 @@ export const loader: LoaderFunction = (args) =>
       const url = new URL(request.url);
       const queryParams = url.searchParams;
 
+      // filters
+      const filters = getResourceFiltersOperatorValue(request);
+      const [idOp, idV] = filters.get("id");
+      const [emailOp, emailV] = filters.get("email");
+      const [usernameOp, usernameV] = filters.get("username");
+      const [createdOp, createdV] = filters.get("createdAt");
+      const [updatedOp, updatedV] = filters.get("updatedAt");
+      const createdAtDate = validDateOrUndefined(createdV);
+      const updatedAtDate = validDateOrUndefined(updatedV);
+
       const pageSize = 10;
       const page = parseInt(queryParams.get("p") || "0");
       const skip = page === 0 || page === 1 ? 0 : page * pageSize - 1;
-      const { paginationMeta, users } = await getUsersWithPagination({
+
+      const {
+        paginationMeta: { total },
+        users,
+      } = await getUsersWithPagination({
         take: pageSize,
         skip,
+        where: {
+          id: {
+            [idOp]: idV,
+            mode: "insensitive",
+          },
+          email: {
+            [emailOp]: emailV,
+            mode: "insensitive",
+          },
+          username: {
+            [usernameOp]: usernameV,
+            mode: "insensitive",
+          },
+          createdAt: {
+            ...(createdOp === "equals" && { gte: createdAtDate }),
+            ...(createdOp === "equals" && {
+              lt: addDays(createdAtDate as Date, 1),
+            }),
+          },
+          updatedAt: {
+            ...(updatedOp === "equals" && { gte: updatedAtDate }),
+            ...(updatedOp === "equals" && {
+              lt: addDays(updatedAtDate as Date, 1),
+            }),
+          },
+        },
       });
-      const pageCount = Math.ceil(paginationMeta.total / pageSize);
+      const pageCount = Math.ceil(total / pageSize);
 
       return json({
         users,
-        total: paginationMeta.total,
+        total: total,
         pageSize,
         pageCount,
       });
@@ -49,33 +89,34 @@ export const UsersPage = (): JSX.Element => {
     pageSize: number;
     pageCount: number;
   }>();
-  const usersColumns: Column[] = [
-    {
-      Header: "Id",
-      accessor: "id",
-    },
-    {
-      Header: "Email",
-      accessor: "email",
-    },
-    {
-      Header: "Username",
-      accessor: "username",
-    },
-    {
-      Header: "Created",
-      accessor: "createdAt",
-      Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-    },
-    {
-      Header: "Updated",
-      accessor: "updatedAt",
-      Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-    },
-  ];
+  const usersColumns: Column[] = useMemo(
+    () => [
+      {
+        Header: "Id",
+        accessor: "id",
+      },
+      {
+        Header: "Email",
+        accessor: "email",
+      },
+      {
+        Header: "Username",
+        accessor: "username",
+      },
+      {
+        Header: "Created",
+        accessor: "createdAt",
+        Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+      },
+      {
+        Header: "Updated",
+        accessor: "updatedAt",
+        Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+      },
+    ],
+    []
+  );
 
-  const navigate = useNavigate();
-  const { pathname, search } = useLocation();
   const modals = useModals();
 
   return (
@@ -95,21 +136,7 @@ export const UsersPage = (): JSX.Element => {
           className="rounded-lg border border-gray-200"
           columns={usersColumns}
           data={users}
-          pagination={{
-            initialPage: parseInt(new URLSearchParams(search).get("p") || "1"),
-            pageSize,
-            pageCount,
-            total,
-          }}
-          manipulation={{
-            onFilters: (filters, _globalFilter) => {
-              return navigate(mapFiltersToQueryParams(pathname, filters), {
-                replace: true,
-              });
-            },
-            defaultFilters: mapQueryParamsToFilters(search),
-            clearFilters: () => navigate(pathname, { replace: true }),
-          }}
+          pagination={{ pageSize, pageCount, total }}
           selection={{
             onDelete: (row) =>
               modals.openConfirmModal({

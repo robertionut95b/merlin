@@ -1,5 +1,5 @@
 import * as z from "zod"
-import { CompleteTheatre, RelatedTheatreModel } from "./index"
+import { CompleteTheatre, RelatedTheatreModel, CompleteReservation, RelatedReservationModel, CompleteTicket, RelatedTicketModel } from "./index"
 
 export const SeatModel = z.object({
   row: z.number().int(),
@@ -7,10 +7,14 @@ export const SeatModel = z.object({
   theatreId: z.string(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
+  reservationId: z.string().nullish(),
+  ticketId: z.string().nullish(),
 })
 
 export interface CompleteSeat extends z.infer<typeof SeatModel> {
   theatre: CompleteTheatre
+  Reservation?: CompleteReservation | null
+  Ticket?: CompleteTicket | null
 }
 
 /**
@@ -20,4 +24,6 @@ export interface CompleteSeat extends z.infer<typeof SeatModel> {
  */
 export const RelatedSeatModel: z.ZodSchema<CompleteSeat> = z.lazy(() => SeatModel.extend({
   theatre: RelatedTheatreModel,
+  Reservation: RelatedReservationModel.nullish(),
+  Ticket: RelatedTicketModel.nullish(),
 }))

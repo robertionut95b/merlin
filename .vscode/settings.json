@@ -40,5 +40,8 @@
   "editor.guides.bracketPairsHorizontal": true,
   "editor.inlayHints.enabled": "on",
   "editor.guides.highlightActiveIndentation": true,
-  "editor.foldingImportsByDefault": true
+  "editor.foldingImportsByDefault": true,
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  }
 }

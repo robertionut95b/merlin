@@ -61,11 +61,9 @@ export const SelectFilter = <T,>({
       <Select
         data={options}
         value={state.value as string}
-        onChange={(value) => {
-          const state = { operator: OperatorValues.EQUAL, value };
-          setState({ operator: OperatorValues.EQUAL, value: value as string });
-          setFilter(state);
-        }}
+        onChange={(value) =>
+          setState({ operator: OperatorValues.EQUAL, value: value as string })
+        }
         disabled={options?.length === 0}
         placeholder={
           options?.length === 0 ? "No options provided" : "Select option"

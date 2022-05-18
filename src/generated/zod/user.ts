@@ -1,5 +1,5 @@
 import * as z from "zod"
-import { CompleteRole, RelatedRoleModel } from "./index"
+import { CompleteRole, RelatedRoleModel, CompleteReservation, RelatedReservationModel, CompleteTicket, RelatedTicketModel } from "./index"
 
 export const UserModel = z.object({
   id: z.string().uuid().optional(),
@@ -12,6 +12,8 @@ export const UserModel = z.object({
 
 export interface CompleteUser extends z.infer<typeof UserModel> {
   role: CompleteRole
+  Reservation: CompleteReservation[]
+  Ticket: CompleteTicket[]
 }
 
 /**
@@ -21,4 +23,6 @@ export interface CompleteUser extends z.infer<typeof UserModel> {
  */
 export const RelatedUserModel: z.ZodSchema<CompleteUser> = z.lazy(() => UserModel.extend({
   role: RelatedRoleModel,
+  Reservation: RelatedReservationModel.array(),
+  Ticket: RelatedTicketModel.array(),
 }))

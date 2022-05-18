@@ -1,6 +1,6 @@
 import { Table as MantineTable } from "@mantine/core";
 import { useLocation, useNavigate, useSearchParams } from "@remix-run/react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { Column, Filters } from "react-table";
 import {
   useFilters,
@@ -13,6 +13,8 @@ import {
   filterSetToURLSearchParams,
   URLtoFilterSet,
 } from "src/remix/filters.remix.utils";
+import useDidMountEffect from "../../../src/helpers/mount";
+import FiltersFunctions from "./filters/filterFns";
 import type { TableFilter } from "./filters/filters.types";
 import StringFilter from "./filters/StringFilter";
 import { TableCheckbox } from "./TableCheckbox";
@@ -83,18 +85,30 @@ const Table = <T,>({
     onEdit = (row: T) => navigate(`${pathname}/${row?.id}/edit`),
   } = selection || {};
 
+  const filtersState = useMemo(() => {
+    return filterSetToTableFilters(URLtoFilterSet(searchParams.toString()));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onFiltersCb = useCallback(
+    (sp) => (filterSet: TableFilter[], _globalFilter: string) => {
+      const urlParams = filterSetToURLSearchParams(filterSet);
+      return setSearchParams({
+        ...sp,
+        ...Object.fromEntries(urlParams),
+        p: sp.get("p") || "1",
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const {
     onCreate = () => navigate(`${pathname}/new`),
     clearFilters = () => navigate(pathname, { replace: true }),
-    onFilters = (filterSet: TableFilter[], _globalFilter: string) => {
-      const urlParams = filterSetToURLSearchParams(filterSet);
-      return setSearchParams({
-        ...searchParams,
-        ...Object.fromEntries(urlParams),
-      });
-    },
+    onFilters = onFiltersCb(searchParams),
     defaultFilters = {
-      filters: filterSetToTableFilters(URLtoFilterSet(searchParams.toString())),
+      filters: filtersState,
     },
   } = manipulation || {};
 
@@ -118,6 +132,14 @@ const Table = <T,>({
       defaultCanFilter: false,
       manualFilters: true,
       manualGlobalFilter: true,
+      filterTypes: useMemo(
+        () => ({
+          stringFilter: FiltersFunctions.stringFilter,
+          numberFilter: FiltersFunctions.numberFilter,
+          dateFilter: FiltersFunctions.dateFilter,
+        }),
+        []
+      ),
       // @ts-expect-error("react-table-types")
       initialState: {
         ...defaultFilters,
@@ -176,20 +198,17 @@ const Table = <T,>({
     state: { selectedRowIds, filters, globalFilter },
   } = instance;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => onFilters(filters, globalFilter), [filters, globalFilter]);
+  useDidMountEffect(() => onFilters(filters, globalFilter), [filters]);
 
   return (
     <div>
-      {manipulation && (
-        <TableTopOptions
-          instance={instance}
-          setPage={setPage}
-          {...manipulation}
-          onCreate={onCreate}
-          clearFilters={clearFilters}
-        />
-      )}
+      <TableTopOptions
+        instance={instance}
+        setPage={setPage}
+        {...manipulation}
+        onCreate={onCreate}
+        clearFilters={clearFilters}
+      />
       <MantineTable
         striped
         highlightOnHover
