@@ -1,5 +1,5 @@
 import * as z from "zod"
-import { CompleteLocation, RelatedLocationModel, CompleteSeat, RelatedSeatModel, CompleteScreenSchedule, RelatedScreenScheduleModel, CompleteReservation, RelatedReservationModel, CompleteTicket, RelatedTicketModel } from "./index"
+import { CompleteLocation, RelatedLocationModel, CompleteSeat, RelatedSeatModel, CompleteScreenEvent, RelatedScreenEventModel } from "./index"
 
 export const TheatreModel = z.object({
   id: z.string().uuid().optional(),
@@ -10,15 +10,12 @@ export const TheatreModel = z.object({
   columns: z.number().int(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
-  screenScheduleId: z.string().nullish(),
 })
 
 export interface CompleteTheatre extends z.infer<typeof TheatreModel> {
   location: CompleteLocation
   seats: CompleteSeat[]
-  ScreenSchedule?: CompleteScreenSchedule | null
-  Reservation: CompleteReservation[]
-  Ticket: CompleteTicket[]
+  ScreenEvent: CompleteScreenEvent[]
 }
 
 /**
@@ -29,7 +26,5 @@ export interface CompleteTheatre extends z.infer<typeof TheatreModel> {
 export const RelatedTheatreModel: z.ZodSchema<CompleteTheatre> = z.lazy(() => TheatreModel.extend({
   location: RelatedLocationModel,
   seats: RelatedSeatModel.array().min(1, { message: "Must have at least one seat" }),
-  ScreenSchedule: RelatedScreenScheduleModel.nullish(),
-  Reservation: RelatedReservationModel.array(),
-  Ticket: RelatedTicketModel.array(),
+  ScreenEvent: RelatedScreenEventModel.array(),
 }))

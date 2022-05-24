@@ -246,7 +246,9 @@ const Table = <T,>({
           })}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={tableColumns.length + 2}>No data</td>
+              <td className="text-center" colSpan={tableColumns.length + 2}>
+                No data
+              </td>
             </tr>
           )}
         </tbody>

@@ -14,8 +14,8 @@ async function seed() {
       username: "admin",
       role: {
         create: {
-          name: "Admin",
-          description: "Administrative users",
+          name: "Administrators",
+          description: "Administrative team",
           permissions: {
             create: {
               action: "All",
@@ -81,6 +81,34 @@ async function seed() {
           ],
         },
       },
+    },
+  });
+
+  await prisma.screening.create({
+    data: {
+      title: "Deep water",
+      description:
+        "A well-to-do husband who allows his wife to have affairs in order to avoid a divorce becomes a prime suspect in the disappearance of her lovers.",
+      duration: 115,
+      imdbId: "tt2180339",
+      poster:
+        "https://m.media-amazon.com/images/M/MV5BNTE1M2NjNDgtYjQ2Ny00YTMzLWJiYWQtMTdmM2Q2YjA1MDg1XkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_.jpg",
+      rating: "R",
+      release: new Date(2022, 3, 18),
+    },
+  });
+
+  await prisma.screening.create({
+    data: {
+      title: "Top Gun: Maverick",
+      description:
+        "After more than thirty years of service as one of the Navy's top aviators, Pete Mitchell is where he belongs, pushing the envelope as a courageous test pilot and dodging the advancement in rank that would ground him.",
+      duration: 131,
+      imdbId: "tt1745960",
+      poster:
+        "https://m.media-amazon.com/images/M/MV5BMmIwZDMyYWUtNTU0ZS00ODJhLTg2ZmEtMTk5ZmYzODcxODYxXkEyXkFqcGdeQXVyMTEyMjM2NDc2._V1_.jpg",
+      rating: "PG-13",
+      release: new Date(2022, 5, 25),
     },
   });
 

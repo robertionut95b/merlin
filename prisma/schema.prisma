@@ -22,6 +22,10 @@ enum ObjectType {
   Permission
   User
   Sales
+  Screening
+  ScreenEvent
+  PricingPolicy
+  Ticket
 }
 
 enum ActionType {
@@ -76,11 +80,10 @@ model User {
   roleId   String
 
   /// @zod.optional()
-  createdAt   DateTime      @default(now())
+  createdAt DateTime @default(now())
   /// @zod.optional()
-  updatedAt   DateTime      @updatedAt
-  Reservation Reservation[]
-  Ticket      Ticket[]
+  updatedAt DateTime @updatedAt
+  Ticket    Ticket[]
 }
 
 model Address {
@@ -117,9 +120,8 @@ model Seat {
   /// @zod.optional()
   updatedAt DateTime @updatedAt
 
-  Reservation   Reservation? @relation(fields: [reservationId], references: [id])
   reservationId String?
-  Ticket        Ticket?      @relation(fields: [ticketId], references: [id])
+  Ticket        Ticket? @relation(fields: [ticketId], references: [id])
   ticketId      String?
   @@id([row, column, theatreId])
 }
@@ -140,68 +142,56 @@ model Theatre {
   columns    Int
 
   /// @zod.optional()
-  createdAt        DateTime        @default(now())
+  createdAt   DateTime      @default(now())
   /// @zod.optional()
-  updatedAt        DateTime        @updatedAt
-  ScreenSchedule   ScreenSchedule? @relation(fields: [screenScheduleId], references: [id])
-  screenScheduleId String?
-  Reservation      Reservation[]
-  Ticket           Ticket[]
+  updatedAt   DateTime      @updatedAt
+  ScreenEvent ScreenEvent[]
 }
 
 model Screening {
   /// @zod.uuid().optional()
-  imdbId           String          @id
-  title            String
-  description      String
-  poster           String
-  rating           String
-  duration         Int
-  release          DateTime
+  imdbId      String        @id
+  title       String
+  description String
+  poster      String
+  rating      String
+  duration    Int
+  release     DateTime
   /// @zod.optional()
-  createdAt        DateTime        @default(now())
+  createdAt   DateTime      @default(now())
   /// @zod.optional()
-  updatedAt        DateTime        @updatedAt
-  ScreenSchedule   ScreenSchedule? @relation(fields: [screenScheduleId], references: [id])
-  screenScheduleId String?
+  updatedAt   DateTime      @updatedAt
+  ScreenEvent ScreenEvent[]
 }
 
-model ScreenSchedule {
-  /// @zod.uuid().optional()
-  id              String          @id @default(cuid())
-  /// @zod.min(1, {message: "Must have at least one screening"})
-  screenings      Screening[]
-  /// @zod.min(1, {message: "Must have at least one theatre"})
-  theatres        Theatre[]
-  pricingPolicies PricingPolicy[]
-  startingDate    DateTime
-  endingDate      DateTime
-  /// @zod.optional()
-  createdAt       DateTime        @default(now())
-  /// @zod.optional()
-  updatedAt       DateTime        @updatedAt
-  Reservation     Reservation[]
-  Ticket          Ticket[]
+enum DayOfWeek {
+  Sunday // 0 value
+  Monday // 1 value
+  Tuesday // 2 value
+  Wednesday // 3 value
+  Thursday // 4 value
+  Friday // 5 value
+  Saturday // 6 value
 }
 
-model Reservation {
-  /// @zod.uuid().optional()
-  id               String         @id @default(cuid())
-  /// @zod.min(1, {message: "Must have at least one seat"})
-  seats            Seat[]
+model ScreenEvent {
+  id            String          @id @default(cuid())
+  // recurrence options
+  daysOfWeek    DayOfWeek[]
+  startTime     String?         @default("00:00:00")
+  endTime       String?         @default("23:59:59")
+  startRecur    DateTime        @default(now())
+  endRecur      DateTime
   /// @zod.min(1, {message: "Must have at least one theatre"})
-  theatre          Theatre        @relation(fields: [theatreId], references: [id])
-  theatreId        String         @unique
-  /// @zod.min(1, {message: "Must have at least one screening"})
-  screenSchedule   ScreenSchedule @relation(fields: [screenScheduleId], references: [id])
-  screenScheduleId String         @unique
-  /// @zod.min(1, {message: "Must have at least one user"})
-  user             User           @relation(fields: [userId], references: [id])
-  userId           String         @unique
+  theatres      Theatre[]
+  screening     Screening       @relation(fields: [screeningId], references: [imdbId])
+  screeningId   String
+  pricingPolicy PricingPolicy[]
+  tickets       Ticket[]
   /// @zod.optional()
-  createdAt        DateTime       @default(now())
+  createdAt     DateTime        @default(now())
   /// @zod.optional()
-  updatedAt        DateTime       @updatedAt
+  updatedAt     DateTime        @updatedAt
 }
 
 enum AgeCategory {
@@ -210,37 +200,42 @@ enum AgeCategory {
   Senior
 }
 
+enum TicketType {
+  TwoD
+  ThreeD
+  IMAX
+  FourD
+}
+
 model PricingPolicy {
   /// @zod.uuid().optional()
-  id               String          @id @default(cuid())
-  ageCategory      AgeCategory
-  price            Float
-  ScreenSchedule   ScreenSchedule? @relation(fields: [screenScheduleId], references: [id])
-  screenScheduleId String?
+  id          String        @id @default(cuid())
+  ageCategory AgeCategory
+  ticketType  TicketType    @default(TwoD)
+  price       Float
   /// @zod.optional()
-  createdAt        DateTime        @default(now())
+  createdAt   DateTime      @default(now())
   /// @zod.optional()
-  updatedAt        DateTime        @updatedAt
+  updatedAt   DateTime      @updatedAt
+  ScreenEvent ScreenEvent[]
 }
 
 model Ticket {
   /// @zod.uuid().optional()
-  id               String         @id @default(cuid())
+  id            String      @id @default(cuid())
   /// @zod.min(1, {message: "Must have at least one seat"})
-  seats            Seat[]
-  /// @zod.min(1, {message: "Must have at least one theatre"})
-  theatre          Theatre        @relation(fields: [theatreId], references: [id])
-  theatreId        String         @unique
-  /// @zod.min(1, {message: "Must have at least one screening"})
-  screenSchedule   ScreenSchedule @relation(fields: [screenScheduleId], references: [id])
-  screenScheduleId String         @unique
+  seats         Seat[]
   /// @zod.min(1, {message: "Must have at least one user"})
-  user             User           @relation(fields: [userId], references: [id])
-  userId           String         @unique
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String      @unique
+  ScreenEvent   ScreenEvent @relation(fields: [screenEventId], references: [id])
+  screenEventId String
+  timeSlot      String
+
   /// @zod.optional()
-  createdAt        DateTime       @default(now())
+  createdAt DateTime @default(now())
   /// @zod.optional()
-  updatedAt        DateTime       @updatedAt
+  updatedAt DateTime @updatedAt
 }
 
 enum RepositoryStatus {

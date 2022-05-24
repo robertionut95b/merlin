@@ -19,10 +19,18 @@ import {
 } from "@remix-run/react";
 import AccessUnauthorizedPage from "./components/navigation/AccessUnauthorized";
 import NotFoundPage from "./components/navigation/NotFound";
+import fullCalendarStylesheetUrl from "./styles/main.min.css";
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 
 export const links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: tailwindStylesheetUrl, as: "style" }];
+  return [
+    { rel: "stylesheet", href: tailwindStylesheetUrl, as: "style" },
+    {
+      rel: "stylesheet",
+      href: fullCalendarStylesheetUrl,
+      as: "style",
+    },
+  ];
 };
 
 export const meta: MetaFunction = () => ({

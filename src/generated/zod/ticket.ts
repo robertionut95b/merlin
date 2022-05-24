@@ -1,20 +1,19 @@
 import * as z from "zod"
-import { CompleteSeat, RelatedSeatModel, CompleteTheatre, RelatedTheatreModel, CompleteScreenSchedule, RelatedScreenScheduleModel, CompleteUser, RelatedUserModel } from "./index"
+import { CompleteSeat, RelatedSeatModel, CompleteUser, RelatedUserModel, CompleteScreenEvent, RelatedScreenEventModel } from "./index"
 
 export const TicketModel = z.object({
   id: z.string().uuid().optional(),
-  theatreId: z.string(),
-  screenScheduleId: z.string(),
   userId: z.string(),
+  screenEventId: z.string(),
+  timeSlot: z.string(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 })
 
 export interface CompleteTicket extends z.infer<typeof TicketModel> {
   seats: CompleteSeat[]
-  theatre: CompleteTheatre
-  screenSchedule: CompleteScreenSchedule
   user: CompleteUser
+  ScreenEvent: CompleteScreenEvent
 }
 
 /**
@@ -24,7 +23,6 @@ export interface CompleteTicket extends z.infer<typeof TicketModel> {
  */
 export const RelatedTicketModel: z.ZodSchema<CompleteTicket> = z.lazy(() => TicketModel.extend({
   seats: RelatedSeatModel.array().min(1, { message: "Must have at least one seat" }),
-  theatre: RelatedTheatreModel.min(1, { message: "Must have at least one theatre" }),
-  screenSchedule: RelatedScreenScheduleModel.min(1, { message: "Must have at least one screening" }),
   user: RelatedUserModel.min(1, { message: "Must have at least one user" }),
+  ScreenEvent: RelatedScreenEventModel,
 }))

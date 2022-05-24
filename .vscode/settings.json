@@ -21,7 +21,9 @@
   "eslint.alwaysShowStatus": true,
   // tell the ESLint plugin to run on save
   "editor.codeActionsOnSave": {
-    "source.fixAll": true
+    "source.fixAll": true,
+    "source.organizeImports": true,
+    "source.sortMembers": true
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[javascript]": {

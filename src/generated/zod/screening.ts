@@ -1,5 +1,5 @@
 import * as z from "zod"
-import { CompleteScreenSchedule, RelatedScreenScheduleModel } from "./index"
+import { CompleteScreenEvent, RelatedScreenEventModel } from "./index"
 
 export const ScreeningModel = z.object({
   imdbId: z.string().uuid().optional(),
@@ -11,11 +11,10 @@ export const ScreeningModel = z.object({
   release: z.date(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
-  screenScheduleId: z.string().nullish(),
 })
 
 export interface CompleteScreening extends z.infer<typeof ScreeningModel> {
-  ScreenSchedule?: CompleteScreenSchedule | null
+  ScreenEvent: CompleteScreenEvent[]
 }
 
 /**
@@ -24,5 +23,5 @@ export interface CompleteScreening extends z.infer<typeof ScreeningModel> {
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
 export const RelatedScreeningModel: z.ZodSchema<CompleteScreening> = z.lazy(() => ScreeningModel.extend({
-  ScreenSchedule: RelatedScreenScheduleModel.nullish(),
+  ScreenEvent: RelatedScreenEventModel.array(),
 }))

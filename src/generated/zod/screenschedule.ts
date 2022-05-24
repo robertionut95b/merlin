@@ -5,6 +5,8 @@ export const ScreenScheduleModel = z.object({
   id: z.string().uuid().optional(),
   startingDate: z.date(),
   endingDate: z.date(),
+  runHours: z.string(),
+  runtime: z.number().int(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 })
