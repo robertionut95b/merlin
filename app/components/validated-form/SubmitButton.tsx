@@ -1,11 +1,14 @@
-import { useFormContext, useIsSubmitting } from "remix-validated-form";
 import type { SharedButtonProps } from "@mantine/core";
 import { Button } from "@mantine/core";
+import { useFormContext, useIsSubmitting } from "remix-validated-form";
 
-export const SubmitButton = (props: SharedButtonProps): JSX.Element => {
+export const SubmitButton = (
+  props: SharedButtonProps & { label?: string }
+): JSX.Element => {
   const isSubmitting = useIsSubmitting();
   const { isValid, fieldErrors } = useFormContext();
   const disabled = isSubmitting || !isValid;
+  const { label } = props;
 
   return (
     <>
@@ -21,7 +24,7 @@ export const SubmitButton = (props: SharedButtonProps): JSX.Element => {
         loading={isSubmitting}
         {...props}
       >
-        Submit
+        {label ? label : "Submit"}
       </Button>
     </>
   );

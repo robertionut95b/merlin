@@ -1,15 +1,18 @@
-import { getAuth, rootAuthLoader } from "@clerk/remix/ssr.server";
+import type { User } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { Outlet } from "@remix-run/react";
+import { json, redirect } from "@remix-run/node";
+import { Outlet, useLoaderData } from "@remix-run/react";
 import NavigationBar from "~/components/navigation/NavigationBar";
+import { authenticator } from "~/services/auth/auth.server";
 import TopBanner from "../components/navigation/TopBanner";
 
 export default function Index() {
+  const { user } = useLoaderData<{ user: User }>();
+
   return (
     <main className="flex h-screen flex-col justify-between bg-gray-200">
       <div className="nav">
-        <NavigationBar />
+        <NavigationBar user={user} />
       </div>
       <div className="banner">
         <TopBanner
@@ -24,13 +27,16 @@ export default function Index() {
   );
 }
 
-export const loader: LoaderFunction = async (args) => {
-  const { request } = args;
-  const { userId } = await getAuth(request);
+export const loader: LoaderFunction = async ({ request }) => {
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
 
-  if (!userId) {
-    return redirect("/sign-in");
+  if (!user) {
+    return redirect("/login");
   }
 
-  return rootAuthLoader(args, { loadUser: true });
+  return json({
+    user,
+  });
 };

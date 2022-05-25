@@ -1,17 +1,18 @@
 import * as z from "zod"
-import { CompleteRole, RelatedRoleModel, CompleteTicket, RelatedTicketModel } from "./index"
+import { CompleteRole, RelatedRoleModel, CompletePassword, RelatedPasswordModel, CompleteTicket, RelatedTicketModel } from "./index"
 
 export const UserModel = z.object({
   id: z.string().uuid().optional(),
   email: z.string(),
-  username: z.string(),
-  roleId: z.string(),
+  username: z.string().nullish(),
+  roleId: z.string().nullish(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 })
 
 export interface CompleteUser extends z.infer<typeof UserModel> {
-  role: CompleteRole
+  role?: CompleteRole | null
+  password: CompletePassword[]
   Ticket: CompleteTicket[]
 }
 
@@ -21,6 +22,7 @@ export interface CompleteUser extends z.infer<typeof UserModel> {
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
 export const RelatedUserModel: z.ZodSchema<CompleteUser> = z.lazy(() => UserModel.extend({
-  role: RelatedRoleModel,
+  role: RelatedRoleModel.nullish(),
+  password: RelatedPasswordModel.array(),
   Ticket: RelatedTicketModel.array(),
 }))

@@ -1,25 +1,24 @@
+import { showNotification } from "@mantine/notifications";
+import type { Role } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import type {
   ActionFunction,
   ErrorBoundaryComponent,
   LoaderFunction,
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
+import { useCatch, useLoaderData } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { UserModel } from "src/generated/zod";
-import { TextInput } from "~/components/validated-form/TextInput";
-import { SubmitButton } from "~/components/validated-form/SubmitButton";
-import { useCatch, useLoaderData } from "@remix-run/react";
-import SelectInput from "~/components/validated-form/SelectInput";
-import type { Role } from "@prisma/client";
-import { Prisma } from "@prisma/client";
-import { getRoles } from "~/models/role.server";
-import { DateTimeInput } from "~/components/validated-form/DateTimeInput";
-import { createUser } from "~/models/user.server";
-import { IsAllowedAccess } from "src/helpers/remix.rbac";
+import { authorizationLoader, IsAllowedAccess } from "src/helpers/remix.rbac";
 import InputAlert from "~/components/layout/InputAlert";
-import { showNotification } from "@mantine/notifications";
 import { AlertCircle } from "~/components/react-icons/AlertCircle";
+import { DateTimeInput } from "~/components/validated-form/DateTimeInput";
+import SelectInput from "~/components/validated-form/SelectInput";
+import { SubmitButton } from "~/components/validated-form/SubmitButton";
+import { TextInput } from "~/components/validated-form/TextInput";
+import { getRoles } from "~/models/role.server";
 
 const validator = withZod(UserModel);
 
@@ -28,14 +27,14 @@ interface LoaderData {
 }
 
 export const action: ActionFunction = async ({ request }) => {
-  const access = IsAllowedAccess({
+  const access = await IsAllowedAccess({
     request,
     actions: ["Create", "All"],
     objects: ["User", "All"],
   });
 
   if (!access) {
-    return new Response("Unauthorized", { status: 401 });
+    throw new Response("Unauthorized", { status: 401 });
   }
 
   const result = await validator.validate(await request.formData());
@@ -43,13 +42,13 @@ export const action: ActionFunction = async ({ request }) => {
 
   const { email, username, roleId } = result.data;
   try {
-    await createUser({
-      data: {
-        email,
-        username,
-        roleId,
-      },
-    });
+    // await createUser({
+    //   data: {
+    //     email,
+    //     username,
+    //     roleId,
+    //   },
+    // });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e?.code === "P2002") {
@@ -62,19 +61,16 @@ export const action: ActionFunction = async ({ request }) => {
   return redirect(`/app/manage/access/users`);
 };
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const access = IsAllowedAccess({
-    request,
-    actions: ["Read", "All"],
+export const loader: LoaderFunction = async (args) => {
+  return authorizationLoader({
+    ...args,
+    actions: ["Create", "All"],
     objects: ["User", "All"],
+    loader: async () => {
+      const roles = await getRoles();
+      return json({ roles });
+    },
   });
-
-  if (!access) {
-    return redirect("/app");
-  }
-
-  const roles = await getRoles();
-  return json({ roles });
 };
 
 const NewUserPage = (): JSX.Element => {
@@ -102,6 +98,7 @@ const NewUserPage = (): JSX.Element => {
       >
         <TextInput name="email" label="Email" type="email" required />
         <TextInput name="username" label="Username" required />
+        <TextInput name="password" label="Password" type="password" required />
         <SelectInput
           name="roleId"
           label="Role"
@@ -123,6 +120,15 @@ export function CatchBoundary() {
     showNotification({
       title: "Invalid input",
       message: caught.data,
+      autoClose: 3000,
+      color: "red",
+      icon: <AlertCircle size={16} />,
+    });
+  }
+  if (caught.status === 401) {
+    showNotification({
+      title: "Unauthorized",
+      message: "Unable to create user",
       autoClose: 3000,
       color: "red",
       icon: <AlertCircle size={16} />,

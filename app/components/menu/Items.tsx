@@ -446,7 +446,7 @@ export const menuOptions: IMenuOptionProps[] = [
       },
       {
         name: "Calendar",
-        resource: ObjectType.ScreenSchedule,
+        resource: ObjectType.ScreenEvent,
         url: "/app/manage/schedule/calendar",
         icon: (
           <svg

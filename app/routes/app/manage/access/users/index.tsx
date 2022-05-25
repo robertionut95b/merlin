@@ -127,7 +127,7 @@ export const UsersPage = (): JSX.Element => {
       <div className="content-description">
         <p>
           This section allows you to create custom defined users, if they do not
-          login via OAuth provided by Clerk.
+          login via OAuth.
         </p>
         <br />
       </div>

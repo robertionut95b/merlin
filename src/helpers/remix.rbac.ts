@@ -6,7 +6,7 @@ import type {
 } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { _validate } from "~/models/permission-validate.server";
-import { getClerkUser } from "./clerk";
+import { authenticator } from "~/services/auth/auth.server";
 
 export async function IsAllowedAccess({
   request,
@@ -17,10 +17,13 @@ export async function IsAllowedAccess({
   actions: ActionType | ActionType[];
   objects: ObjectType | ObjectType[];
 }): Promise<boolean | Response> {
-  const user = await getClerkUser({ request });
-  const { role } = user.private_metadata;
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+  const role = user?.role?.name;
 
-  if (!role) {
+  if (role == null || role == undefined) {
+    console.log("here 2");
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -43,7 +46,7 @@ export interface AccessLoaderFunction {
 }
 
 export const authorizationLoader: AccessLoaderFunction = async (args) => {
-  const { request, actions, objects, redirectTo, loader } = args;
+  const { request, actions, objects, redirectTo = "/app", loader } = args;
 
   const access = await IsAllowedAccess({
     request,
@@ -51,7 +54,7 @@ export const authorizationLoader: AccessLoaderFunction = async (args) => {
     objects,
   });
 
-  if (!access) {
+  if (access === false) {
     if (!redirectTo) {
       return new Response("Unauthorized", { status: 401 });
     }

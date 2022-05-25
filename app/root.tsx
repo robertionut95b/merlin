@@ -1,5 +1,3 @@
-import { ClerkApp, ClerkCatchBoundary } from "@clerk/remix";
-import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { NotificationsProvider } from "@mantine/notifications";
@@ -8,6 +6,7 @@ import type {
   LoaderFunction,
   MetaFunction,
 } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -39,8 +38,8 @@ export const meta: MetaFunction = () => ({
   viewport: "width=device-width,initial-scale=1",
 });
 
-export const loader: LoaderFunction = (args) => {
-  return rootAuthLoader(args, { loadUser: true });
+export const loader: LoaderFunction = async () => {
+  return json({});
 };
 
 const App = (): JSX.Element => {
@@ -71,9 +70,9 @@ const App = (): JSX.Element => {
   );
 };
 
-export default ClerkApp(App);
+export default App;
 
-function AppCatchBoundary() {
+export const CatchBoundary = () => {
   const caught = useCatch();
 
   if (caught.status === 404) {
@@ -110,6 +109,4 @@ function AppCatchBoundary() {
         </pre>
       </div>
     );
-}
-
-export const CatchBoundary = ClerkCatchBoundary(AppCatchBoundary);
+};

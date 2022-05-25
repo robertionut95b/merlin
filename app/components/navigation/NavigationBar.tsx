@@ -1,10 +1,11 @@
-import { UserButton } from "@clerk/clerk-react";
-import { useMemo } from "react";
+import type { User } from "@prisma/client";
 import { useLocation } from "@remix-run/react";
+import { useMemo } from "react";
 import BurgerButton from "./BurgerButton";
 import NavigationButton from "./NavigationButton";
 import NavigationButtonMobile from "./NavigationButtonMobile";
 import NotificationButton from "./NotificationButton";
+import { UserAvatar } from "./UserAvatar";
 
 interface INavigationItemProps {
   label: string;
@@ -12,7 +13,7 @@ interface INavigationItemProps {
   active?: boolean;
 }
 
-const NavigationBar = (): JSX.Element => {
+const NavigationBar = ({ user }: { user: User }): JSX.Element => {
   const { pathname } = useLocation();
 
   const navigationItems: INavigationItemProps[] = useMemo(() => {
@@ -27,11 +28,6 @@ const NavigationBar = (): JSX.Element => {
         to: "/app/manage",
         active: pathname.toLowerCase().includes("/manage"),
       },
-      // {
-      //   label: "Users",
-      //   to: "/app/users",
-      //   active: pathname.toLowerCase().includes("/users"),
-      // },
     ];
   }, [pathname]);
 
@@ -61,11 +57,9 @@ const NavigationBar = (): JSX.Element => {
               </div>
             </div>
           </div>
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+          <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
             <NotificationButton />
-            <div className="relative ml-3 mt-1.5">
-              <UserButton />
-            </div>
+            <UserAvatar user={user} />
           </div>
         </div>
       </div>

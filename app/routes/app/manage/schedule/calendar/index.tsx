@@ -9,9 +9,8 @@ import { getTheatres } from '~/models/theatre.server';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import type { Location, ScreenEvent, Screening, Theatre } from '@prisma/client';
-import { getScreeningEvents, getScreeningEventsWithPagination } from '~/models/screeningEvents.server';
+import { getScreeningEvents } from '~/models/screeningEvents.server';
 import { endOfYear, startOfYear} from 'date-fns';
-import type { PaginatedResult } from 'prisma-pagination';
 import { getScreenings } from '../../../../../models/screenings.server';
 import { dayStringToNumber } from 'src/helpers/fullcalendar';
 

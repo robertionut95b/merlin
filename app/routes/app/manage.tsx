@@ -1,27 +1,14 @@
-import { ObjectType } from "@prisma/client";
-import type { LoaderFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Outlet, useLoaderData } from "@remix-run/react";
-import { getClerkUser } from "src/helpers/clerk";
+import { Outlet } from "@remix-run/react";
 import { menuOptions } from "~/components/menu/Items";
 import SideBar from "~/components/menu/Sidebar";
 import PageBreadcrumbs from "~/components/navigation/PageBreadcrumbs";
-import { _getAccessibleResources } from "~/models/permission-validate.server";
 
 const ManagementPage = (): JSX.Element => {
-  const { opts } = useLoaderData<{
-    opts: string[];
-  }>();
-
-  const menuOp = menuOptions.filter(
-    (op) => opts.includes(op.resource) || opts.includes(ObjectType.All)
-  );
-
   return (
     <>
       <div className="management flex h-full flex-col md:flex-row">
         <div className="left-side-menu gap-y-2 bg-white p-2">
-          <SideBar options={menuOp} />
+          <SideBar options={menuOptions} />
         </div>
         <div className="right-side-content w-full overflow-x-auto border-l border-l-gray-200 bg-white px-4 pb-2">
           <div className="page-breadcrumbs my-6">
@@ -49,25 +36,6 @@ const ManagementPage = (): JSX.Element => {
       </div>
     </>
   );
-};
-
-export const loader: LoaderFunction = async ({ request }) => {
-  const user = await getClerkUser({ request });
-  const { role } = user.private_metadata;
-
-  if (!role) {
-    return redirect("/app");
-  }
-
-  const perm = await _getAccessibleResources(["Read", "All"], role);
-
-  if (!perm || !perm.length) {
-    return redirect("/app");
-  }
-
-  return json({
-    opts: perm,
-  });
 };
 
 export default ManagementPage;

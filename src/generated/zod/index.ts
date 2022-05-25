@@ -1,6 +1,7 @@
 export * from "./role"
 export * from "./permission"
 export * from "./user"
+export * from "./password"
 export * from "./address"
 export * from "./location"
 export * from "./seat"

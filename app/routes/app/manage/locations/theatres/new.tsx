@@ -11,7 +11,7 @@ import { useCatch, useLoaderData } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { validationError } from "remix-validated-form";
 import { TheatreModel } from "src/generated/zod";
-import { IsAllowedAccess } from "src/helpers/remix.rbac";
+import { authorizationLoader, IsAllowedAccess } from "src/helpers/remix.rbac";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 import TheatreForm from "~/components/forms/TheatreForm";
@@ -43,7 +43,7 @@ export const action: ActionFunction = async ({ request }) => {
   const access = await IsAllowedAccess({
     request,
     actions: ["Create", "All"],
-    objects: ["Role", "All"],
+    objects: ["Theatre", "All"],
   });
 
   if (!access) {
@@ -77,25 +77,22 @@ export const action: ActionFunction = async ({ request }) => {
   return redirect(`app/manage/locations/theatres`);
 };
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const access = await IsAllowedAccess({
-    request,
+export const loader: LoaderFunction = async (args) => {
+  return authorizationLoader({
+    ...args,
     actions: ["Create", "All"],
-    objects: ["Role", "All"],
-  });
+    objects: ["Theatre", "All"],
+    loader: async () => {
+      const locations = await getLocations({
+        include: {
+          address: true,
+        },
+      });
 
-  if (!access) {
-    return redirect("/app");
-  }
-
-  const locations = await getLocations({
-    include: {
-      address: true,
+      return json({
+        locations,
+      });
     },
-  });
-
-  return json({
-    locations,
   });
 };
 

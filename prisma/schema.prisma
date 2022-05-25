@@ -73,17 +73,32 @@ model Permission {
 
 model User {
   /// @zod.uuid().optional()
-  id       String @id @default(cuid())
-  email    String @unique
-  username String
-  role     Role   @relation(fields: [roleId], references: [id])
-  roleId   String
+  id       String     @id @default(cuid())
+  email    String     @unique
+  username String?
+  role     Role?      @relation(fields: [roleId], references: [id])
+  roleId   String?
+  password Password[]
 
   /// @zod.optional()
   createdAt DateTime @default(now())
   /// @zod.optional()
   updatedAt DateTime @updatedAt
   Ticket    Ticket[]
+}
+
+model Password {
+  /// @zod.uuid().optional()
+  id       String  @id @default(cuid())
+  password String
+  User     User    @relation(fields: [userId], references: [id])
+  userId   String  @unique
+  active   Boolean
+
+  /// @zod.optional()
+  createdAt DateTime @default(now())
+  /// @zod.optional()
+  updatedAt DateTime @updatedAt
 }
 
 model Address {
