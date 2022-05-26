@@ -1,29 +1,33 @@
 import { Collapse } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { isResourceAccessible } from "src/helpers/remix.rbac";
+import { useAuth } from "../../context/AuthProvider";
 import type { IMenuOptionProps } from "./Items";
 import ManagementMenuItem from "./SidebarItem";
 
 const SideBar = ({ options }: { options: IMenuOptionProps[] }): JSX.Element => {
   const [collapsed, setCollapsed] = useState<boolean>(true);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setCollapsed(localStorage.getItem("sidebar-collapsed") === "true");
-    }
-  }, []);
+  const { permissions } = useAuth();
 
   return (
     <aside className="h-full">
       <div className="hidden h-full md:block">
         <div className={`flex h-full flex-col justify-between`}>
           <div
-            className={`overflow-y-auto transition-width duration-200 ease-out ${
+            className={`flex flex-col overflow-y-auto transition-width duration-200 ease-out ${
               collapsed ? "min-w-min" : "w-56"
             }`}
           >
-            {options.map((option, idx) => (
-              <ManagementMenuItem key={idx} {...option} minimal={collapsed} />
-            ))}
+            {options.map(
+              (option, idx) =>
+                isResourceAccessible(permissions, option.resource) && (
+                  <ManagementMenuItem
+                    key={idx}
+                    {...option}
+                    minimal={collapsed}
+                  />
+                )
+            )}
           </div>
           <button
             className="mt-4 flex w-full justify-center self-end rounded-md border border-indigo-800 bg-indigo-700 text-white"
@@ -73,9 +77,12 @@ const SideBar = ({ options }: { options: IMenuOptionProps[] }): JSX.Element => {
       </div>
       <div className="block md:hidden">
         <Collapse in={collapsed} transitionDuration={500}>
-          {options.map((option, idx) => (
-            <ManagementMenuItem key={idx} {...option} />
-          ))}
+          {options.map(
+            (option, idx) =>
+              isResourceAccessible(permissions, option.resource) && (
+                <ManagementMenuItem key={idx} {...option} />
+              )
+          )}
         </Collapse>
         <div className="btn-collapse flex justify-center">
           <button

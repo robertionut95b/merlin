@@ -1,4 +1,4 @@
-import type { ActionType, ObjectType } from "@prisma/client";
+import type { ActionType, ObjectType, Permission } from "@prisma/client";
 import type {
   AppData,
   DataFunctionArgs,
@@ -6,6 +6,7 @@ import type {
 } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { _validate } from "~/models/permission-validate.server";
+import { getUserById } from "~/models/user.server";
 import { authenticator } from "~/services/auth/auth.server";
 interface AuthMiddleware {
   actions: ActionType | ActionType[];
@@ -34,7 +35,8 @@ export async function IsAllowedAccess({
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
-  const role = user?.role?.name;
+  const userEntry = await getUserById(user.id);
+  const role = userEntry?.role?.name;
 
   if (role === null || role === undefined) {
     throw new Response("Unauthorized", { status: 401 });
@@ -60,4 +62,16 @@ export const authorizationLoader: AccessLoaderFunction = async (args) => {
   }
 
   return loader(args);
+};
+
+export const isResourceAccessible = (
+  perms: Permission[],
+  resource: ObjectType
+) => {
+  const perm = perms.find(
+    (p) =>
+      (p.objectType === resource || p.objectType === "All") &&
+      (p.action === "Read" || p.action === "All")
+  );
+  return perm?.allowed || false;
 };

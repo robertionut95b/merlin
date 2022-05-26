@@ -1,4 +1,4 @@
-import { Tooltip } from "@mantine/core";
+import { Menu } from "@mantine/core";
 import { NavLink, useLocation } from "@remix-run/react";
 import type { IMenuOptionProps } from "./Items";
 
@@ -18,25 +18,30 @@ const SidebarItem = ({
 
   if (minimal) {
     return (
-      <>
-        <NavLink
-          to={url}
-          prefetch="intent"
-          className={({ isActive }) =>
-            `menu-item my-2 flex rounded-lg p-2 text-sm font-semibold hover:bg-gray-300 hover:text-white dark:hover:bg-indigo-700 ${activeClass(
-              isActive
-            )}`
-          }
-        >
-          <Tooltip label={name} position="right" withArrow>
-            <div className="flex items-center gap-x-2">{icon}</div>
-          </Tooltip>
-        </NavLink>
-        {items &&
-          items?.map((item, idx) => (
-            <SidebarItem key={idx} minimal={minimal} {...item} />
-          ))}
-      </>
+      <Menu
+        trigger="hover"
+        position="right"
+        control={
+          <NavLink
+            to={url}
+            className={`menu-item my-2 flex rounded-lg p-1.5 text-sm font-semibold hover:bg-gray-300 hover:text-white dark:hover:bg-indigo-700`}
+          >
+            {icon}
+          </NavLink>
+        }
+      >
+        <Menu.Label> {name}</Menu.Label>
+        {items?.map((item, idx) => (
+          <NavLink to={item.url} key={idx} prefetch="intent">
+            <Menu.Item
+              className={`hover:bg-gray-300 hover:text-white dark:hover:bg-indigo-700`}
+              icon={item.icon}
+            >
+              {item.name}
+            </Menu.Item>
+          </NavLink>
+        ))}
+      </Menu>
     );
   } else
     return (

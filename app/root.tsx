@@ -1,6 +1,7 @@
 import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { NotificationsProvider } from "@mantine/notifications";
+import type { Permission } from "@prisma/client";
 import type {
   LinksFunction,
   LoaderFunction,
@@ -15,9 +16,15 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
+  useLoaderData,
 } from "@remix-run/react";
 import AccessUnauthorizedPage from "./components/navigation/AccessUnauthorized";
 import NotFoundPage from "./components/navigation/NotFound";
+import { AuthProvider } from "./context/AuthProvider";
+import { getPermissions } from "./models/permission.server";
+import { getUserById } from "./models/user.server";
+import type { UserWithRole } from "./services/auth/auth.server";
+import { authenticator } from "./services/auth/auth.server";
 import fullCalendarStylesheetUrl from "./styles/main.min.css";
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 
@@ -38,11 +45,30 @@ export const meta: MetaFunction = () => ({
   viewport: "width=device-width,initial-scale=1",
 });
 
-export const loader: LoaderFunction = async () => {
-  return json({});
+interface LoaderProps {
+  permissions: Permission[];
+  user: UserWithRole;
+}
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const user = await authenticator.isAuthenticated(request);
+  var permissions: Permission[] = [];
+
+  if (user !== null && user !== undefined) {
+    const userEntry = await getUserById(user.id);
+    permissions = await getPermissions({
+      where: { roleId: userEntry?.roleId || undefined },
+    });
+  }
+
+  return json({
+    permissions,
+    user,
+  });
 };
 
 const App = (): JSX.Element => {
+  const { user, permissions } = useLoaderData<LoaderProps>();
   return (
     <html lang="en" className="h-full font-inter">
       <head>
@@ -58,7 +84,9 @@ const App = (): JSX.Element => {
         >
           <ModalsProvider>
             <NotificationsProvider>
-              <Outlet />
+              <AuthProvider user={user} permissions={permissions}>
+                <Outlet />
+              </AuthProvider>
             </NotificationsProvider>
           </ModalsProvider>
         </MantineProvider>

@@ -14,7 +14,7 @@ const PageBreadcrumbs = (): JSX.Element => {
   }));
 
   const crumbs = c.map(({ label, pathname }) => (
-    <Link key={pathname} to={pathname}>
+    <Link key={pathname} to={pathname} prefetch="intent">
       {label}
     </Link>
   ));

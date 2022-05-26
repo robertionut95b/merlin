@@ -1,6 +1,7 @@
 import type { User } from "@prisma/client";
 import { useLocation } from "@remix-run/react";
 import { useMemo } from "react";
+import { useAuth } from "~/context/AuthProvider";
 import BurgerButton from "./BurgerButton";
 import NavigationButton from "./NavigationButton";
 import NavigationButtonMobile from "./NavigationButtonMobile";
@@ -13,7 +14,7 @@ interface INavigationItemProps {
   active?: boolean;
 }
 
-const NavigationBar = ({ user }: { user: User }): JSX.Element => {
+const NavigationBar = (): JSX.Element => {
   const { pathname } = useLocation();
 
   const navigationItems: INavigationItemProps[] = useMemo(() => {
@@ -30,6 +31,8 @@ const NavigationBar = ({ user }: { user: User }): JSX.Element => {
       },
     ];
   }, [pathname]);
+
+  const { user } = useAuth();
 
   return (
     <nav className="bg-gray-200 dark:bg-gray-800">
@@ -59,7 +62,7 @@ const NavigationBar = ({ user }: { user: User }): JSX.Element => {
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
             <NotificationButton />
-            <UserAvatar user={user} />
+            <UserAvatar user={user as User} />
           </div>
         </div>
       </div>
