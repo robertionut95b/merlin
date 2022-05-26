@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { createPrismaRedisCache } from "prisma-redis-middleware";
 import invariant from "tiny-invariant";
 
 let prisma: PrismaClient;
@@ -65,11 +66,22 @@ function getClient() {
     const before = Date.now();
     const result = await next(params);
     const after = Date.now();
-    console.log(
+    console.debug(
       `Query ${params.model}.${params.action} took ${after - before}ms`
     );
     return result;
   });
+
+  // redis cache
+  client.$use(
+    // @ts-expect-error("prisma-redis-middleware is not typed")
+    createPrismaRedisCache({
+      models: [{ model: "Permission", cacheTime: 60 }],
+      storage: { type: "memory", options: { size: 2048 } },
+      cacheTime: 300,
+      // onHit: (key) => console.debug(`🔍 cache hit for ${key}`),
+    })
+  );
 
   return client;
 }

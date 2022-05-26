@@ -242,7 +242,7 @@ const Table = <T,>({
                       {...cell.getCellProps()}
                       key={jdx}
                       className="max-w-xs truncate"
-                      title={cell.value}
+                      title={String(cell.value)}
                     >
                       {cell.render("Cell")}
                     </td>
