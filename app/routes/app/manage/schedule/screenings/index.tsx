@@ -1,19 +1,19 @@
 import { useModals } from "@mantine/modals";
-import type { Prisma, Screening } from "@prisma/client";
+import type { Screening } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { addDays, format, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 import type { PaginatedResult } from "prisma-pagination";
-import { createPaginator } from "prisma-pagination";
 import { useMemo } from "react";
 import type { Column } from "react-table";
-import { validDateOrUndefined } from "src/helpers/dates";
 import { getResourceFiltersOperatorValue } from "src/helpers/remix-action-loaders";
 import { authorizationLoader } from "src/helpers/remix.rbac";
+import DataAlert from "~/components/layout/DataAlert";
 import DateFilter from "~/components/tables/filters/DateFilter";
 import type { UseFiltersColumnOptionsWithOptionsList } from "~/components/tables/filters/filters.types";
 import Table from "~/components/tables/Table";
-import { prisma } from "~/db.server";
+import { getScreeningsWithPagination } from "~/models/screenings.server";
+import { parseDateFiltersToQuery } from "../../../../../../src/helpers/remix-action-loaders";
 
 export const loader: LoaderFunction = async (args) => {
   return authorizationLoader({
@@ -30,17 +30,12 @@ export const loader: LoaderFunction = async (args) => {
       const filters = getResourceFiltersOperatorValue(request);
       const [idOp, idV] = filters.get("imdbId");
       const [nameOp, nameV] = filters.get("title");
+      const [ratingOp, ratingV] = filters.get("rating");
       const [createdOp, createdV] = filters.get("createdAt");
       const [updatedOp, updatedV] = filters.get("updatedAt");
-      const createdAtDate = validDateOrUndefined(createdV);
-      const updatedAtDate = validDateOrUndefined(updatedV);
+      const [releaseOp, releaseV] = filters.get("release");
 
-      const paginate = createPaginator({ perPage: 10 });
-      const { data, meta } = await paginate<
-        Screening,
-        Prisma.ScreeningFindManyArgs
-      >(
-        prisma.screening,
+      const { data, meta } = await getScreeningsWithPagination(
         {
           where: {
             imdbId: {
@@ -51,17 +46,18 @@ export const loader: LoaderFunction = async (args) => {
               [nameOp]: nameV,
               mode: "insensitive",
             },
+            rating: {
+              [ratingOp]: ratingV,
+              mode: "insensitive",
+            },
+            release: {
+              ...parseDateFiltersToQuery(releaseOp, releaseV),
+            },
             createdAt: {
-              ...(createdOp === "equals" && { gte: createdAtDate }),
-              ...(createdOp === "equals" && {
-                lt: addDays(createdAtDate as Date, 1),
-              }),
+              ...parseDateFiltersToQuery(createdOp, createdV),
             },
             updatedAt: {
-              ...(updatedOp === "equals" && { gte: updatedAtDate }),
-              ...(updatedOp === "equals" && {
-                lt: addDays(updatedAtDate as Date, 1),
-              }),
+              ...parseDateFiltersToQuery(updatedOp, updatedV),
             },
           },
         },
@@ -212,3 +208,7 @@ const ScreeningsPage = (): JSX.Element => {
 };
 
 export default ScreeningsPage;
+
+export function ErrorBoundary(): JSX.Element {
+  return <DataAlert message="Could not load screenings data" />;
+}

@@ -93,10 +93,12 @@ const Table = <T,>({
   const onFiltersCb = useCallback(
     (sp) => (filterSet: TableFilter[], _globalFilter: string) => {
       const urlParams = filterSetToURLSearchParams(filterSet);
+      // reset pagination
+      setPage(1);
       return setSearchParams({
         ...sp,
         ...Object.fromEntries(urlParams),
-        p: sp.get("p") || "1",
+        p: "1",
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -236,7 +238,12 @@ const Table = <T,>({
               <tr {...row.getRowProps()} key={idx}>
                 {row.cells.map((cell, jdx) => {
                   return (
-                    <td {...cell.getCellProps()} key={jdx}>
+                    <td
+                      {...cell.getCellProps()}
+                      key={jdx}
+                      className="max-w-xs truncate"
+                      title={cell.value}
+                    >
                       {cell.render("Cell")}
                     </td>
                   );

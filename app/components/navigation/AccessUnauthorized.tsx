@@ -19,9 +19,11 @@ const AccessUnauthorizedPage = () => {
         contact support.
       </Text>
       <Group position="center">
-        <Button size="md" variant="outline" color="indigo">
-          <NavLink to="/">Go back home</NavLink>
-        </Button>
+        <NavLink to="/">
+          <Button size="md" variant="outline" color="indigo">
+            Go back home
+          </Button>
+        </NavLink>
       </Group>
     </Container>
   );

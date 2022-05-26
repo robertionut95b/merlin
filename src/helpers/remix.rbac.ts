@@ -46,7 +46,13 @@ export async function IsAllowedAccess({
 }
 
 export const authorizationLoader: AccessLoaderFunction = async (args) => {
-  const { request, actions, objects, redirectTo, loader } = args;
+  const {
+    request,
+    actions,
+    objects,
+    redirectTo = "/unauthorized",
+    loader,
+  } = args;
 
   const access = await IsAllowedAccess({
     request,

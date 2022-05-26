@@ -1,4 +1,6 @@
+import { addDays, startOfDay } from "date-fns";
 import qs from "qs";
+import { validDateOrUndefined } from "./dates";
 
 export const inputFromSearch = (queryString: URLSearchParams) =>
   qs.parse(queryString.toString());
@@ -29,4 +31,42 @@ export const getResourceFiltersOperatorValue = (
     f.add(k, [operator, value]);
   });
   return f;
+};
+
+export const parseDateFiltersToQuery = (operator: string, value: string) => {
+  var date = validDateOrUndefined(value);
+  if (date === undefined) return {};
+  date = startOfDay(date);
+
+  switch (operator) {
+    case "equals":
+      return {
+        gte: date,
+        lt: addDays(date, 1),
+      };
+    case "not":
+      return {
+        lte: date,
+        gt: addDays(date, 1),
+      };
+    case "gt":
+      return {
+        gt: date,
+      };
+    case "gte":
+      return {
+        gte: date,
+      };
+    case "lt":
+      return {
+        lt: date,
+      };
+    case "lte":
+      return {
+        lte: date,
+      };
+
+    default:
+      return {};
+  }
 };

@@ -1,11 +1,11 @@
 import {
+  Button,
+  Container,
   createStyles,
   Image,
-  Container,
-  Title,
-  Text,
-  Button,
   SimpleGrid,
+  Text,
+  Title,
 } from "@mantine/core";
 import { Link } from "@remix-run/react";
 
@@ -45,7 +45,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const NotFoundPage = (): JSX.Element => {
+const NotFoundPageComponent = (): JSX.Element => {
   const { classes } = useStyles();
 
   return (
@@ -66,14 +66,16 @@ const NotFoundPage = (): JSX.Element => {
             the address, or the page has been moved to another URL. If you think
             this is an error contact support.
           </Text>
-          <Button
-            variant="outline"
-            size="md"
-            mt="xl"
-            className={classes.control}
-          >
-            <Link to="/">Go back home</Link>
-          </Button>
+          <Link to="/">
+            <Button
+              variant="outline"
+              size="md"
+              mt="xl"
+              className={classes.control}
+            >
+              Go back home
+            </Button>
+          </Link>
         </div>
         <Image
           src={"https://ui.mantine.dev/_next/static/media/image.11cd6c19.svg"}
@@ -84,4 +86,4 @@ const NotFoundPage = (): JSX.Element => {
   );
 };
 
-export default NotFoundPage;
+export default NotFoundPageComponent;

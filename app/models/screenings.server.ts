@@ -4,12 +4,17 @@ import { createPaginator } from "prisma-pagination";
 import { prisma } from "~/db.server";
 
 export const getScreeningsWithPagination = async (
-  opts?: Parameters<PrismaClient["screening"]["findMany"]>[number]
+  opts?: Parameters<PrismaClient["screening"]["findMany"]>[number],
+  paginationOpts?: { page?: number }
 ): Promise<PaginatedResult<Screening>> => {
   const paginate = createPaginator({ perPage: 10 });
-  return paginate<Screening, Prisma.ScreeningFindManyArgs>(prisma.screening, {
-    ...opts,
-  });
+  return paginate<Screening, Prisma.ScreeningFindManyArgs>(
+    prisma.screening,
+    {
+      ...opts,
+    },
+    { page: paginationOpts?.page || 1 }
+  );
 };
 
 export const getScreenings = async (

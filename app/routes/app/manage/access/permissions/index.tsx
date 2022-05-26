@@ -4,11 +4,14 @@ import { ActionType, ObjectType } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
-import { addDays, format, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
+import type { PaginatedResult } from "prisma-pagination";
 import { useMemo } from "react";
 import type { Column } from "react-table";
-import { validDateOrUndefined } from "src/helpers/dates";
-import { getResourceFiltersOperatorValue } from "src/helpers/remix-action-loaders";
+import {
+  getResourceFiltersOperatorValue,
+  parseDateFiltersToQuery,
+} from "src/helpers/remix-action-loaders";
 import { authorizationLoader } from "src/helpers/remix.rbac";
 import DataAlert from "~/components/layout/DataAlert";
 import DateFilter from "~/components/tables/filters/DateFilter";
@@ -26,6 +29,7 @@ export const loader: LoaderFunction = async (args) => {
       const { request } = arg;
       const url = new URL(request.url);
       const queryParams = url.searchParams;
+      const page = parseInt(queryParams.get("p") || "0");
 
       const filters = getResourceFiltersOperatorValue(request);
       const [idOp, idV] = filters.get("id");
@@ -35,83 +39,67 @@ export const loader: LoaderFunction = async (args) => {
       const [allowedOp, allowedV] = filters.get("allowed");
       const [createdOp, createdV] = filters.get("createdAt");
       const [updatedOp, updatedV] = filters.get("updatedAt");
-      const createdAt = validDateOrUndefined(createdV);
-      const updatedAt = validDateOrUndefined(updatedV);
 
-      const pageSize = 10;
-      const page = parseInt(queryParams.get("p") || "0");
-      const skip = page === 0 || page === 1 ? 0 : (page - 1) * pageSize;
-
-      const {
-        paginationMeta: { total },
-        permissions,
-      } = await getPermissionsWithPagination({
-        take: pageSize,
-        skip,
-        include: {
-          Role: {
-            select: {
-              name: true,
+      const { data, meta } = await getPermissionsWithPagination(
+        {
+          include: {
+            Role: {
+              select: {
+                name: true,
+              },
             },
           },
-        },
-        where: {
-          id: {
-            [idOp]: idV,
-            mode: "insensitive",
-          },
-          action: {
-            [actionOp]: actionV,
-          },
-          Role: {
-            name: {
-              [roleNameOp]: roleNameV,
+          where: {
+            id: {
+              [idOp]: idV,
               mode: "insensitive",
             },
-          },
-          objectType: {
-            [objectOp]: objectV,
-          },
-          allowed: {
-            [allowedOp]:
-              allowedV === undefined ? undefined : allowedV === "true",
-          },
-          createdAt: {
-            ...(createdOp === "equals" && { gte: createdAt }),
-            ...(updatedOp === "equals" && {
-              lt: addDays(createdAt as Date, 1),
-            }),
-          },
-          updatedAt: {
-            ...(updatedOp === "equals" && { gte: updatedAt }),
-            ...(updatedOp === "equals" && {
-              lt: addDays(updatedAt as Date, 1),
-            }),
+            action: {
+              [actionOp]: actionV,
+            },
+            Role: {
+              name: {
+                [roleNameOp]: roleNameV,
+                mode: "insensitive",
+              },
+            },
+            objectType: {
+              [objectOp]: objectV,
+            },
+            allowed: {
+              [allowedOp]:
+                allowedV === undefined ? undefined : allowedV === "true",
+            },
+            createdAt: {
+              ...parseDateFiltersToQuery(createdOp, createdV),
+            },
+            updatedAt: {
+              ...parseDateFiltersToQuery(updatedOp, updatedV),
+            },
           },
         },
-      });
-      const pageCount = Math.ceil(total / pageSize);
+        { page }
+      );
 
       return json({
-        permissions,
-        total,
-        pageSize,
-        pageCount,
+        permissions: data,
+        meta,
       });
     },
   });
 };
 
 const PermissionsPage = (): JSX.Element => {
-  const { pageCount, pageSize, permissions, total } = useLoaderData<{
+  const {
+    permissions,
+    meta: { perPage, total, lastPage },
+  } = useLoaderData<{
     permissions: (Permission & {
       Role: {
         name: string;
       };
     })[];
-    total: number;
-    pageSize: number;
-    pageCount: number;
+    meta: PaginatedResult<Permission>["meta"];
   }>();
 
   const data = useMemo(() => permissions, [permissions]);
@@ -185,8 +173,8 @@ const PermissionsPage = (): JSX.Element => {
           columns={permsColumns}
           data={data}
           pagination={{
-            pageSize,
-            pageCount,
+            pageSize: perPage,
+            pageCount: lastPage,
             total,
           }}
           selection={{

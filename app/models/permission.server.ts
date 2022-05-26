@@ -1,6 +1,13 @@
-import { prisma } from "~/db.server";
-import type { ObjectType, Prisma, PrismaClient } from "@prisma/client";
+import type {
+  ObjectType,
+  Permission,
+  Prisma,
+  PrismaClient,
+} from "@prisma/client";
+import type { PaginatedResult } from "prisma-pagination";
+import { createPaginator } from "prisma-pagination";
 import { PermissionModel } from "src/generated/zod";
+import { prisma } from "~/db.server";
 
 export async function getPermissions(
   opts?: Parameters<PrismaClient["permission"]["findMany"]>[number]
@@ -11,26 +18,17 @@ export async function getPermissions(
 }
 
 export async function getPermissionsWithPagination(
-  opts?: Parameters<PrismaClient["permission"]["findMany"]>[number]
-): Promise<{
-  permissions: Awaited<ReturnType<typeof prisma.permission.findMany>>;
-  paginationMeta: {
-    total: number;
-  };
-}> {
-  const [total, permissions] = await prisma.$transaction([
-    prisma.permission.count({ where: { ...opts?.where } }),
-    prisma.permission.findMany({
+  opts?: Parameters<PrismaClient["permission"]["findMany"]>[number],
+  paginationOpts?: { page?: number }
+): Promise<PaginatedResult<Permission>> {
+  const paginate = createPaginator({ perPage: 10 });
+  return paginate<Permission, Prisma.PermissionFindManyArgs>(
+    prisma.permission,
+    {
       ...opts,
-    }),
-  ]);
-
-  return {
-    permissions,
-    paginationMeta: {
-      total,
     },
-  };
+    { page: paginationOpts?.page || 1 }
+  );
 }
 
 export async function createPermission(
