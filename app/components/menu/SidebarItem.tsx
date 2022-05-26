@@ -21,6 +21,7 @@ const SidebarItem = ({
       <>
         <NavLink
           to={url}
+          prefetch="intent"
           className={({ isActive }) =>
             `menu-item my-2 flex rounded-lg p-2 text-sm font-semibold hover:bg-gray-300 hover:text-white dark:hover:bg-indigo-700 ${activeClass(
               isActive
@@ -42,6 +43,7 @@ const SidebarItem = ({
       <>
         <NavLink
           to={url}
+          prefetch="intent"
           className={({ isActive }) =>
             `menu-item my-2 flex rounded-lg p-2 text-sm font-semibold hover:bg-gray-300 hover:text-white dark:hover:bg-indigo-700 ${activeClass(
               isActive

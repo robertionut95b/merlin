@@ -6,6 +6,9 @@ module.exports = {
         width: "width",
       },
     },
+    fontFamily: {
+      inter: ["Borlow", "sans-serif"],
+    },
   },
   plugins: [],
 };

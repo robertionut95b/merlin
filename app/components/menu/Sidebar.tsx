@@ -4,7 +4,7 @@ import type { IMenuOptionProps } from "./Items";
 import ManagementMenuItem from "./SidebarItem";
 
 const SideBar = ({ options }: { options: IMenuOptionProps[] }): JSX.Element => {
-  const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [collapsed, setCollapsed] = useState<boolean>(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

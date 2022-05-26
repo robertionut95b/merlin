@@ -44,7 +44,7 @@ export const loader: LoaderFunction = async () => {
 
 const App = (): JSX.Element => {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full font-inter">
       <head>
         <Meta />
         <Links />

@@ -67,11 +67,11 @@ export const createUser = async (email: string, password: string) => {
 };
 
 export async function getUserById(id: string) {
-  return prisma.user.findUnique({ where: { id } });
+  return prisma.user.findUnique({ where: { id }, include: { role: true } });
 }
 
 export async function getUserByEmail(email: string) {
-  return prisma.user.findUnique({ where: { email } });
+  return prisma.user.findUnique({ where: { email }, include: { role: true } });
 }
 
 export async function deleteUserByEmail(email: string) {

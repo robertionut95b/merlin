@@ -2,15 +2,14 @@ import { useModals } from "@mantine/modals";
 import type { Address, Location } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useLocation, useNavigate } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import { format, parseISO } from "date-fns";
+import { useMemo } from "react";
 import type { Column } from "react-table";
 import { authorizationLoader } from "src/helpers/remix.rbac";
 import { getStartedAtEndAtDates } from "src/remix/dates";
-import {
-  mapFiltersToQueryParams,
-  mapQueryParamsToFilters,
-} from "src/remix/remix-routes";
+import DateFilter from "~/components/tables/filters/DateFilter";
+import type { UseFiltersColumnOptionsWithOptionsList } from "~/components/tables/filters/filters.types";
 import Table from "~/components/tables/Table";
 import { getLocationsWithPagination } from "~/models/locations.server";
 
@@ -19,7 +18,6 @@ export const loader: LoaderFunction = async (args) => {
     ...args,
     actions: ["Read", "All"],
     objects: ["Location", "All"],
-    redirectTo: "/app",
     loader: async ({ request }) => {
       const url = new URL(request.url);
       const queryParams = url.searchParams;
@@ -71,8 +69,6 @@ export const loader: LoaderFunction = async (args) => {
 };
 
 const LocationsList = (): JSX.Element => {
-  const navigate = useNavigate();
-  const { pathname, search } = useLocation();
   const modals = useModals();
 
   const { pageCount, pageSize, locations, total } = useLoaderData<{
@@ -82,49 +78,51 @@ const LocationsList = (): JSX.Element => {
     pageCount: number;
   }>();
 
-  const columns: Column[] = [
-    {
-      id: "id",
-      accessor: "id",
-      Header: "ID",
-    },
-    {
-      id: "name",
-      accessor: "name",
-      Header: "Name",
-    },
-    {
-      id: "street",
-      accessor: "address.street",
-      Header: "Street",
-    },
-    {
-      id: "city",
-      accessor: "address.city",
-      Header: "City",
-    },
-    {
-      id: "country",
-      accessor: "address.country",
-      Header: "Country",
-    },
-    {
-      Header: "Created",
-      accessor: "createdAt",
-      Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-      // @ts-expect-error("react-table-types")
-      Filter: DateTimeColumnFilter,
-      filter: "dateEquals",
-    },
-    {
-      Header: "Updated",
-      accessor: "updatedAt",
-      Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
-      // @ts-expect-error("react-table-types")
-      Filter: DateTimeColumnFilter,
-      filter: "dateEquals",
-    },
-  ];
+  const columns: (Column & UseFiltersColumnOptionsWithOptionsList<object>)[] =
+    useMemo(
+      () => [
+        {
+          id: "id",
+          accessor: "id",
+          Header: "ID",
+        },
+        {
+          id: "name",
+          accessor: "name",
+          Header: "Name",
+        },
+        {
+          id: "street",
+          accessor: "address.street",
+          Header: "Street",
+        },
+        {
+          id: "city",
+          accessor: "address.city",
+          Header: "City",
+        },
+        {
+          id: "country",
+          accessor: "address.country",
+          Header: "Country",
+        },
+        {
+          Header: "Created",
+          accessor: "createdAt",
+          Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+          Filter: DateFilter,
+          filter: "dateFilter",
+        },
+        {
+          Header: "Updated",
+          accessor: "updatedAt",
+          Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+          Filter: DateFilter,
+          filter: "dateFilter",
+        },
+      ],
+      []
+    );
 
   return (
     <div className="locations">
@@ -133,19 +131,9 @@ const LocationsList = (): JSX.Element => {
         columns={columns}
         data={locations}
         pagination={{
-          initialPage: parseInt(new URLSearchParams(search).get("p") || "1"),
           pageSize,
           pageCount,
           total,
-        }}
-        manipulation={{
-          onCreate: () => navigate(`${pathname}/new`, { replace: true }),
-          onFilters: (filters, _globalFilter) =>
-            navigate(mapFiltersToQueryParams(pathname, filters), {
-              replace: true,
-            }),
-          defaultFilters: mapQueryParamsToFilters(search),
-          clearFilters: () => navigate(pathname, { replace: true }),
         }}
         selection={{
           onDelete: (row) =>

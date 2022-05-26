@@ -48,7 +48,7 @@ export const action: ActionFunction = ({ request, context }) => {
 
 const LoginPage = () => {
   return (
-    <Center className="flex h-screen flex-col">
+    <Center className="flex h-screen flex-col bg-gray-100">
       <ValidatedForm
         id="login-form"
         method="post"
