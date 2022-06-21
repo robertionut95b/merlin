@@ -3,6 +3,7 @@ import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
+import { verifyAuthenticityToken } from "remix-utils";
 import { validationError } from "remix-validated-form";
 import { isActionAllowed } from "src/helpers/remix.rbac";
 import ScreeningForm from "~/components/forms/ScreeningForm";
@@ -11,9 +12,14 @@ import {
   updateScreening,
 } from "~/models/screenings.server";
 import { ScreeningModelForm } from "~/models/validators/screening.validator";
+import { getSession } from "~/session.server";
 
 export const action: ActionFunction = async ({ request }) => {
   await isActionAllowed(request, ["Update", "All"], ["Screening", "All"]);
+  // check csrf token
+  const session = await getSession(request.headers.get("Cookie"));
+  await verifyAuthenticityToken(request, session);
+
   const validator = withZod(ScreeningModelForm);
   const result = await validator.validate(await request.formData());
   if (result.error) return validationError(result.error);

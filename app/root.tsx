@@ -18,6 +18,10 @@ import {
   useCatch,
   useLoaderData,
 } from "@remix-run/react";
+import {
+  AuthenticityTokenProvider,
+  createAuthenticityToken,
+} from "remix-utils";
 import AccessUnauthorizedPage from "./components/navigation/AccessUnauthorized";
 import NotFoundPage from "./components/navigation/NotFound";
 import { AuthProvider } from "./context/AuthProvider";
@@ -25,6 +29,7 @@ import { getPermissions } from "./models/permission.server";
 import { getUserById } from "./models/user.server";
 import type { UserWithRole } from "./services/auth/auth.server";
 import { authenticator } from "./services/auth/auth.server";
+import { commitSession, getSession } from "./session.server";
 import fullCalendarStylesheetUrl from "./styles/main.min.css";
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 
@@ -48,11 +53,14 @@ export const meta: MetaFunction = () => ({
 interface LoaderProps {
   permissions: Permission[];
   user: UserWithRole;
+  csrf: string;
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
   const user = await authenticator.isAuthenticated(request);
   var permissions: Permission[] = [];
+  let session = await getSession(request.headers.get("cookie"));
+  const csrf = createAuthenticityToken(session);
 
   if (user !== null && user !== undefined) {
     const userEntry = await getUserById(user.id);
@@ -61,14 +69,20 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
   }
 
-  return json({
-    permissions,
-    user,
-  });
+  return json(
+    {
+      permissions,
+      user,
+      csrf,
+    },
+    {
+      headers: { "Set-Cookie": await commitSession(session) },
+    }
+  );
 };
 
 const App = (): JSX.Element => {
-  const { user, permissions } = useLoaderData<LoaderProps>();
+  const { user, permissions, csrf } = useLoaderData<LoaderProps>();
   return (
     <html lang="en" className="h-full font-inter">
       <head>
@@ -84,9 +98,11 @@ const App = (): JSX.Element => {
         >
           <ModalsProvider>
             <NotificationsProvider>
-              <AuthProvider user={user} permissions={permissions}>
-                <Outlet />
-              </AuthProvider>
+              <AuthenticityTokenProvider token={csrf}>
+                <AuthProvider user={user} permissions={permissions}>
+                  <Outlet />
+                </AuthProvider>
+              </AuthenticityTokenProvider>
             </NotificationsProvider>
           </ModalsProvider>
         </MantineProvider>

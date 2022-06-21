@@ -1,5 +1,6 @@
 import type { Screening } from "@prisma/client";
 import { withZod } from "@remix-validated-form/with-zod";
+import { AuthenticityTokenInput } from "remix-utils";
 import { ValidatedForm } from "remix-validated-form";
 import { zfd } from "zod-form-data";
 import { ScreeningModelForm } from "~/models/validators/screening.validator";
@@ -27,6 +28,7 @@ export default function ScreeningForm({
         validator={validator}
         method="post"
       >
+        <AuthenticityTokenInput />
         <TextInput
           name="imdbId"
           label="IMDB Id"
