@@ -164,11 +164,15 @@ model Theatre {
 }
 
 model Screening {
-  /// @zod.uuid().optional()
+  /// @zod.nonempty().min(9)
   imdbId      String        @id
+  /// @zod.nonempty().min(1)
   title       String
+  /// @zod.nonempty().min(20)
   description String
+  /// @zod.nonempty().min(10)
   poster      String
+  /// @zod.nonempty().min(1)
   rating      String
   duration    Int
   release     DateTime
@@ -190,6 +194,7 @@ enum DayOfWeek {
 }
 
 model ScreenEvent {
+  /// @zod.optional()
   id            String          @id @default(cuid())
   // recurrence options
   daysOfWeek    DayOfWeek[]
@@ -200,6 +205,7 @@ model ScreenEvent {
   /// @zod.min(1, {message: "Must have at least one theatre"})
   theatres      Theatre[]
   screening     Screening       @relation(fields: [screeningId], references: [imdbId])
+  /// @zod.min(9)
   screeningId   String
   pricingPolicy PricingPolicy[]
   tickets       Ticket[]
@@ -223,7 +229,7 @@ enum TicketType {
 }
 
 model PricingPolicy {
-  /// @zod.uuid().optional()
+  /// @zod.optional()
   id          String        @id @default(cuid())
   ageCategory AgeCategory
   ticketType  TicketType    @default(TwoD)
@@ -233,6 +239,8 @@ model PricingPolicy {
   /// @zod.optional()
   updatedAt   DateTime      @updatedAt
   ScreenEvent ScreenEvent[]
+
+  @@unique([ageCategory, ticketType])
 }
 
 model Ticket {

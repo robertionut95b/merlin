@@ -22,3 +22,23 @@ export const getScreeningEvents = async (
     ...opts,
   });
 };
+
+export const createScreeningEvent = async (
+  opts: Parameters<PrismaClient["screenEvent"]["create"]>[number]
+): Promise<ScreenEvent> => {
+  return prisma.screenEvent.create({
+    ...opts,
+  });
+};
+
+export const getUniqueScreeningEvent = async (
+  opts: Parameters<PrismaClient["screenEvent"]["findUnique"]>[number]
+): Promise<ScreenEvent | null> => {
+  return prisma.screenEvent.findUnique({
+    ...opts,
+  });
+};
+
+export const updateScreeningEvent = async (
+  data: Parameters<PrismaClient["screenEvent"]["update"]>[number]
+) => prisma.screenEvent.update(data);

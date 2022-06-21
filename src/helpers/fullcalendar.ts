@@ -1,56 +1,26 @@
-export interface RecurringEventProps {
-  title: string;
-  groupId: string;
-  daysOfWeek: number[];
-  startTime?: string;
-  endTime?: string;
-  startRecur?: Date;
-  endRecur?: Date;
-}
+import type { ScreenEvent } from "@prisma/client";
+import { areIntervalsOverlapping, getDate, parse, setDate } from "date-fns";
 
-export interface RecurringEvent {
-  toRecurringEvent(): RecurringEventProps;
-}
-
-class CalendarEvent implements RecurringEvent {
-  private _title: string;
-  private _groupid: string;
-  private _daysOfWeek: number[];
-  private _startTime: string;
-  private _endTime: string;
-  private _startRecur: Date;
-  private _endRecur: Date;
-
-  constructor(
-    title: string,
-    groupid: string,
-    daysOfWeek: number[],
-    startTime: string,
-    endTime: string,
-    startRecur: Date,
-    endRecur: Date
-  ) {
-    this._title = title;
-    this._groupid = groupid;
-    this._daysOfWeek = daysOfWeek;
-    this._startTime = startTime;
-    this._endTime = endTime;
-    this._startRecur = startRecur;
-    this._endRecur = endRecur;
+export const mapNumberToDays = (number: number): string => {
+  switch (number) {
+    case 0:
+      return "Sunday";
+    case 1:
+      return "Monday";
+    case 2:
+      return "Tuesday";
+    case 3:
+      return "Wednesday";
+    case 4:
+      return "Thursday";
+    case 5:
+      return "Friday";
+    case 6:
+      return "Saturday";
+    default:
+      throw new Error("Invalid day number");
   }
-
-  public toRecurringEvent(): RecurringEventProps {
-    return {
-      title: this._title,
-      groupId: this._groupid,
-      daysOfWeek: this._daysOfWeek,
-      startTime: this._startTime,
-      endTime: this._endTime,
-      startRecur: this._startRecur,
-      endRecur: this._endRecur,
-    };
-  }
-}
+};
 
 export const dayStringToNumber = (day: string): number => {
   switch (day) {
@@ -69,6 +39,32 @@ export const dayStringToNumber = (day: string): number => {
     case "Saturday":
       return 6;
     default:
-      return -1;
+      throw new Error("Invalid day number");
   }
+};
+
+export const checkEventsOverlapWithTime = (
+  events: ScreenEvent[],
+  start: Date,
+  end: Date
+): boolean => {
+  for (var event of events) {
+    const { startTime, endTime } = event;
+    if (startTime && endTime) {
+      const parsedStartTime = parse(startTime, "HH:mm:ss", new Date());
+      const parsedEndTime = parse(endTime, "HH:mm:ss", new Date());
+      const equalizedParsedStartDate = setDate(start, getDate(parsedStartTime));
+      const equalizedParsedEndtDate = setDate(end, getDate(parsedEndTime));
+
+      if (
+        areIntervalsOverlapping(
+          { start: parsedStartTime, end: parsedEndTime },
+          { start: equalizedParsedStartDate, end: equalizedParsedEndtDate }
+        )
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
 };

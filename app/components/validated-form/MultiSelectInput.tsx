@@ -14,7 +14,8 @@ const MultiSelectInput = ({
   helper,
   ...props
 }: IMultipleSelectInputProps): JSX.Element => {
-  const { error, defaultValue } = useField(name);
+  const { defaultValue } = props;
+  const { error, validate } = useField(name);
   const [values, setValues] = useState<string[]>(defaultValue || []);
   return (
     <>
@@ -23,8 +24,10 @@ const MultiSelectInput = ({
       ))}
       <MultiSelect
         data={data}
-        value={values}
-        onChange={setValues}
+        onChange={(v) => {
+          setValues(v);
+          validate();
+        }}
         {...props}
         error={error}
       />

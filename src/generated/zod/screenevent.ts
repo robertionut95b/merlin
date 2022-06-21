@@ -3,13 +3,13 @@ import { DayOfWeek } from "@prisma/client"
 import { CompleteTheatre, RelatedTheatreModel, CompleteScreening, RelatedScreeningModel, CompletePricingPolicy, RelatedPricingPolicyModel, CompleteTicket, RelatedTicketModel } from "./index"
 
 export const ScreenEventModel = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   daysOfWeek: z.nativeEnum(DayOfWeek).array(),
   startTime: z.string().nullish(),
   endTime: z.string().nullish(),
   startRecur: z.date(),
   endRecur: z.date(),
-  screeningId: z.string(),
+  screeningId: z.string().min(9),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 })

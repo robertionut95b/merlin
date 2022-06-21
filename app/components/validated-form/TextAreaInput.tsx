@@ -1,20 +1,20 @@
-import type { TextInputProps } from "@mantine/core";
-import { TextInput as MantineTextInput } from "@mantine/core";
+import type { TextareaProps } from "@mantine/core";
+import { Textarea as MantineTextAreaInput } from "@mantine/core";
 import { useField } from "remix-validated-form";
 
-type ITextInputProps = TextInputProps & {
+type ITextAreaInputProps = TextareaProps & {
   name: string;
   label: string;
 };
 
-export const TextInput: React.FC<ITextInputProps> = ({
+export const TextAreaInput: React.FC<ITextAreaInputProps> = ({
   name,
   defaultValue,
   ...props
 }) => {
   const { error, getInputProps } = useField(name);
   return (
-    <MantineTextInput
+    <MantineTextAreaInput
       {...getInputProps({ id: name })}
       {...props}
       error={error}

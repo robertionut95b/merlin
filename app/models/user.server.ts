@@ -3,6 +3,10 @@ import bcrypt from "bcryptjs";
 import { prisma } from "~/db.server";
 import { hashPassword } from "~/services/utils";
 
+const generateRandomString = () =>
+  Math.random().toString(36).substring(2, 15) +
+  Math.random().toString(36).substring(2, 15);
+
 export async function getUsers(
   opts?: Parameters<PrismaClient["user"]["findMany"]>[number]
 ): Promise<User[]> {
@@ -40,7 +44,10 @@ export async function getUsersWithPagination(
   };
 }
 
-export const createUser = async (email: string, password: string) => {
+export const createUser = async (
+  email: string,
+  password: string = generateRandomString()
+) => {
   const hashedPassword = await hashPassword(password);
   return prisma.user.create({
     data: {
@@ -59,6 +66,38 @@ export const createUser = async (email: string, password: string) => {
           },
           where: {
             name: "Users",
+          },
+        },
+      },
+    },
+  });
+};
+
+export const createUserWithRole = async (
+  email: string,
+  username: string,
+  role: string,
+  password: string = generateRandomString()
+) => {
+  const hashedPassword = await hashPassword(password);
+  return prisma.user.create({
+    data: {
+      email,
+      password: {
+        create: {
+          password: hashedPassword,
+          active: true,
+        },
+      },
+      username,
+      role: {
+        connectOrCreate: {
+          create: {
+            name: "Users",
+            description: "Public users",
+          },
+          where: {
+            name: role,
           },
         },
       },

@@ -24,3 +24,27 @@ export const getScreenings = async (
     ...opts,
   });
 };
+
+export const getUniqueScreeningById = async (screeningId: string) => {
+  return prisma.screening.findUnique({
+    where: {
+      imdbId: screeningId,
+    },
+  });
+};
+
+export const getUniqueScreening = async (
+  opts: Parameters<PrismaClient["screening"]["findUnique"]>[number]
+) => {
+  return prisma.screening.findUnique({
+    ...opts,
+  });
+};
+
+export const updateScreening = async (
+  data: Parameters<PrismaClient["screening"]["update"]>[number]
+) => prisma.screening.update(data);
+
+export const createScreening = async (
+  data: Parameters<PrismaClient["screening"]["create"]>[number]
+) => prisma.screening.create(data);

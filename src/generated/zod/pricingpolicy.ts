@@ -3,7 +3,7 @@ import { AgeCategory, TicketType } from "@prisma/client"
 import { CompleteScreenEvent, RelatedScreenEventModel } from "./index"
 
 export const PricingPolicyModel = z.object({
-  id: z.string().uuid().optional(),
+  id: z.string().optional(),
   ageCategory: z.nativeEnum(AgeCategory),
   ticketType: z.nativeEnum(TicketType),
   price: z.number(),

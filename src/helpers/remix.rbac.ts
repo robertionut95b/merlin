@@ -81,3 +81,16 @@ export const isResourceAccessible = (
   );
   return perm?.allowed || false;
 };
+
+export const isActionAllowed = async (
+  request: Request,
+  actions: ActionType | ActionType[],
+  objects: ObjectType | ObjectType[],
+  exc: boolean | undefined = true
+) => {
+  const access = await IsAllowedAccess({ request, actions, objects });
+  if (exc === true && (access === false || access instanceof Response)) {
+    throw new Response("Unauthorized", { status: 401 });
+  }
+  return access;
+};

@@ -19,6 +19,7 @@ import SelectInput from "~/components/validated-form/SelectInput";
 import { SubmitButton } from "~/components/validated-form/SubmitButton";
 import { TextInput } from "~/components/validated-form/TextInput";
 import { getRoles } from "~/models/role.server";
+import { createUser, createUserWithRole } from "~/models/user.server";
 
 const validator = withZod(UserModel);
 
@@ -42,13 +43,11 @@ export const action: ActionFunction = async ({ request }) => {
 
   const { email, username, roleId } = result.data;
   try {
-    // await createUser({
-    //   data: {
-    //     email,
-    //     username,
-    //     roleId,
-    //   },
-    // });
+    if (username && roleId) {
+      await createUserWithRole(email, username, roleId);
+    } else {
+      await createUser(email);
+    }
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e?.code === "P2002") {

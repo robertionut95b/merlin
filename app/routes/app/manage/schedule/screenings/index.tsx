@@ -1,7 +1,7 @@
 import { useModals } from "@mantine/modals";
 import type { Screening } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useNavigate } from "@remix-run/react";
 import { format, parseISO } from "date-fns";
 import type { PaginatedResult } from "prisma-pagination";
 import { useMemo } from "react";
@@ -122,7 +122,7 @@ const ScreeningsPage = (): JSX.Element => {
         {
           Header: "Release",
           accessor: "release",
-          Cell: (row: any) => format(parseISO(row.value), "yyyy-MM-dd HH:mm"),
+          Cell: (row: any) => format(parseISO(row.value), "dd MMM yy"),
           Filter: DateFilter,
           filter: "dateFilter",
         },
@@ -143,6 +143,8 @@ const ScreeningsPage = (): JSX.Element => {
       ],
       []
     );
+
+  const navigate = useNavigate();
 
   return (
     <>
@@ -166,6 +168,10 @@ const ScreeningsPage = (): JSX.Element => {
             total,
           }}
           selection={{
+            onView: (row) =>
+              navigate(`/app/manage/schedule/screenings/${row.imdbId}`),
+            onEdit: (row) =>
+              navigate(`/app/manage/schedule/screenings/${row.imdbId}/edit`),
             onDelete: (_row) =>
               modals.openConfirmModal({
                 title: "Delete Screening",
