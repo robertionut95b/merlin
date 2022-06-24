@@ -23,7 +23,8 @@ export const TablePagination = ({
   return (
     <div className="flex items-center justify-end gap-x-4">
       <span className="font-normal">
-        {`${page === pageCount ? total : pageSize * page}`} of <b>{total}</b>
+        {total > 0 ? `${page === pageCount ? total : pageSize * page}` : 0} of{" "}
+        <b>{total}</b>
       </span>
       <Pagination
         initialPage={initialPage}

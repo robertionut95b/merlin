@@ -2,7 +2,7 @@ import * as z from "zod"
 import { CompleteScreenEvent, RelatedScreenEventModel } from "./index"
 
 export const ScreeningModel = z.object({
-  imdbId: z.string().nonempty().min(9),
+  imdbId: z.string().nonempty().regex(/(tt)\d{7,9}/, { message: "Invalid IMDB id format" }),
   title: z.string().nonempty().min(1),
   description: z.string().nonempty().min(20),
   poster: z.string().nonempty().min(10),

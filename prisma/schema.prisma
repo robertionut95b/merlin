@@ -138,6 +138,7 @@ model Seat {
   reservationId String?
   Ticket        Ticket? @relation(fields: [ticketId], references: [id])
   ticketId      String?
+
   @@id([row, column, theatreId])
 }
 
@@ -164,7 +165,7 @@ model Theatre {
 }
 
 model Screening {
-  /// @zod.nonempty().min(9)
+  /// @zod.nonempty().regex(/(tt)\d{7,9}/, {message: "Invalid IMDB id format"})
   imdbId      String        @id
   /// @zod.nonempty().min(1)
   title       String
@@ -253,7 +254,7 @@ model Ticket {
   userId        String      @unique
   ScreenEvent   ScreenEvent @relation(fields: [screenEventId], references: [id])
   screenEventId String
-  timeSlot      String
+  time          DateTime
 
   /// @zod.optional()
   createdAt DateTime @default(now())

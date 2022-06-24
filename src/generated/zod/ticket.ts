@@ -5,7 +5,7 @@ export const TicketModel = z.object({
   id: z.string().uuid().optional(),
   userId: z.string(),
   screenEventId: z.string(),
-  timeSlot: z.string(),
+  time: z.date(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 })

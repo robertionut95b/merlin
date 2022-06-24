@@ -1,9 +1,8 @@
 import type { Screening } from "@prisma/client";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { verifyAuthenticityToken } from "remix-utils";
+import { created, verifyAuthenticityToken } from "remix-utils";
 import { validationError } from "remix-validated-form";
 import { isActionAllowed } from "src/helpers/remix.rbac";
 import ScreeningForm from "~/components/forms/ScreeningForm";
@@ -33,7 +32,7 @@ export const action: ActionFunction = async ({ request }) => {
     },
   });
 
-  return redirect(`/app/manage/schedule/screenings/${screening.imdbId}`);
+  return created(screening);
 };
 
 export const loader: LoaderFunction = async ({ params }) => {
