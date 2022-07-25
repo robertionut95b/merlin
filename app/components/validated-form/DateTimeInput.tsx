@@ -1,6 +1,6 @@
-import { useField } from "remix-validated-form";
 import type { DatePickerProps } from "@mantine/dates";
 import { DatePicker } from "@mantine/dates";
+import { useField } from "remix-validated-form";
 
 type ITextInputProps = DatePickerProps & {
   name: string;
@@ -8,14 +8,10 @@ type ITextInputProps = DatePickerProps & {
 };
 
 export const DateTimeInput = (props: ITextInputProps) => {
-  const { name } = props;
-  const { error, getInputProps, defaultValue } = useField(name);
+  const { name, defaultValue } = props;
+  const { error, getInputProps } = useField(name);
+  console.log(defaultValue);
   return (
-    <DatePicker
-      {...getInputProps({ id: name })}
-      defaultValue={new Date(defaultValue) || new Date()}
-      {...props}
-      error={error}
-    />
+    <DatePicker {...getInputProps({ id: name })} {...props} error={error} />
   );
 };

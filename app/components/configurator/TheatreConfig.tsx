@@ -1,13 +1,10 @@
-import { Checkbox, TextInput } from "@mantine/core";
+import { TextInput } from "@mantine/core";
 import type { Prisma } from "@prisma/client";
 import { useEffect, useState } from "react";
+import TheatreLegend from "./legend/TheatreLegend";
+import TheatreMap from "./theatre/TheatreMap";
 import type { TheatreConfiguration } from "./types";
-import {
-  addEntireRowSeats,
-  addSpot,
-  checkAllSeatsInRowAreAdded,
-  checkSpotIsAdded,
-} from "./utils";
+import { checkAllSeatsInRowAreAdded } from "./utils";
 
 const ThreatreConfig = ({
   configuration,
@@ -109,95 +106,16 @@ const ThreatreConfig = ({
           readOnly={readOnly}
         />
       </div>
-      <div className="legend mt-2 flex flex-col gap-4">
-        <h4 className="text-lg font-bold">Legend</h4>
-        <div className="legend-seats-items flex flex-col gap-4 md:flex-row md:items-center">
-          <div className="free-seat rounded-lg border border-dashed border-gray-700 p-2">
-            <span className="text-sm">Free space</span>
-          </div>
-          <div className="legend-configured-seat rounded-lg border border-dashed border-gray-700 bg-gray-700 p-2 text-white">
-            <span className="text-sm">Configured space</span>
-          </div>
-          <div className="legend-entrance-exit">
-            <span className="rounded-lg bg-green-600 p-2 text-sm text-white">
-              Exit/Entrance
-            </span>
-          </div>
-          <div className="legend-screen">
-            <span className="rounded-full bg-slate-700 p-3 text-sm text-slate-300">
-              Screen
-            </span>
-          </div>
-        </div>
-        <p className="text-sm">
-          Free spaces can be considered as hallways, as long as they traverse
-          through a specific or entire width/height of the room
-        </p>
-      </div>
+      <TheatreLegend />
       <h4 className="text-lg font-bold">Map editor</h4>
-      <div className="background min-h-[640px] overflow-x-auto bg-gray-900 pb-8 dark:bg-gray-200">
-        <div className="screen mx-auto flex h-6 w-[97%] justify-center rounded-br-full rounded-bl-full bg-slate-700 px-2 pt-1">
-          <span className="text-sm text-slate-300">Screen</span>
-        </div>
-        <div className="entrances my-2 flex w-full justify-between gap-2 p-2">
-          <span className="w-24 rounded-lg bg-green-600 p-4 text-center text-sm text-white">
-            Exit
-          </span>
-          <span className="w-24 rounded-lg bg-green-600 p-4 text-center text-sm text-white">
-            Entrance
-          </span>
-        </div>
-        <div className="room mx-6 mt-16 grid items-center overflow-x-auto">
-          {Array(rows)
-            .fill(0)
-            .map((_, row) => (
-              <div
-                key={row}
-                className={`row-${row} my-4 flex items-center justify-center gap-4`}
-              >
-                <Checkbox
-                  label={`R${row + 1}`}
-                  size={"sm"}
-                  disabled={readOnly}
-                  onChange={(e) => {
-                    setSeats(addEntireRowSeats(seats, row, columns, columns));
-                    configuration?.setSeats?.(
-                      addEntireRowSeats(seats, row, columns, columns)
-                    );
-                    setSelectedRows((prev) => {
-                      return {
-                        ...prev,
-                        [row]: e.target.checked,
-                      };
-                    });
-                  }}
-                  // @ts-expect-error("type-error")
-                  checked={selectedRows?.[row] || false}
-                />
-                {Array(columns)
-                  .fill(0)
-                  .map((__, column) => (
-                    <button
-                      type={"button"}
-                      key={column}
-                      disabled={readOnly}
-                      className={`column-${column} flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-gray-700 p-4 transition-colors duration-200 hover:bg-gray-400 ${
-                        checkSpotIsAdded(row, column, seats)
-                          ? "bg-gray-700 text-white"
-                          : null
-                      }`}
-                      onClick={() => {
-                        setSeats(addSpot(seats, row, column));
-                        configuration?.setSeats?.(addSpot(seats, row, column));
-                      }}
-                    >
-                      {column + 1}
-                    </button>
-                  ))}
-              </div>
-            ))}
-        </div>
-      </div>
+      <TheatreMap
+        rows={rows}
+        columns={columns}
+        seats={seats}
+        setSeats={setSeats}
+        selectedRows={selectedRows}
+        setSelectedRows={setSelectedRows}
+      />
     </div>
   );
 };

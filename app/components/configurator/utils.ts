@@ -1,10 +1,10 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma, Seat } from "@prisma/client";
 
 export const addSpot = (
-  seats: Prisma.SeatCreateManyTheatreInput[],
+  seats: Prisma.SeatCreateManyTheatreInput[] | Seat[],
   row: number,
   column: number
-): Prisma.SeatCreateManyTheatreInput[] => {
+): Prisma.SeatCreateManyTheatreInput[] | Seat[] => {
   const spot = { row, column };
   // check if spot already exists
   if (checkSpotIsAdded(row, column, seats)) {
@@ -16,10 +16,39 @@ export const addSpot = (
   }
 };
 
+export const addReservingSpot = (
+  seats: Seat[],
+  reservedSeats: Seat[],
+  row: number,
+  column: number,
+  theatreId: string
+): Seat[] => {
+  const spot = {
+    row,
+    column,
+    theatreId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    reservationId: null,
+    ticketId: null,
+  };
+  // check if spot already exists
+  if (
+    checkSpotIsAdded(row, column, reservedSeats) ||
+    checkSpotIsAdded(row, column, seats)
+  ) {
+    // remove spot
+    return seats.filter((s) => !(s.row === row && s.column === column));
+  } else {
+    // add spot
+    return [...seats, spot];
+  }
+};
+
 export const checkSpotIsAdded = (
   row: number,
   column: number,
-  seats: Prisma.SeatCreateManyTheatreInput[]
+  seats: Prisma.SeatCreateManyTheatreInput[] = []
 ) => seats.some((spot) => spot.row === row && spot.column === column);
 
 export const checkAllSeatsInRowAreAdded = (

@@ -17,9 +17,23 @@ export const getTicketsWithPagination = async (
   );
 };
 
+export const getTickets = async (
+  opts?: Parameters<PrismaClient["ticket"]["findMany"]>[number]
+) =>
+  prisma.ticket.findMany({
+    ...opts,
+  });
+
 export const getUniqueTicket = async (
   opts: Parameters<PrismaClient["ticket"]["findUnique"]>[number]
 ) =>
   prisma.ticket.findUnique({
+    ...opts,
+  });
+
+export const createTicket = async (
+  opts: Parameters<PrismaClient["ticket"]["create"]>[number]
+) =>
+  prisma.ticket.create({
     ...opts,
   });

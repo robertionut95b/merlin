@@ -19,7 +19,6 @@ import InputAlert from "~/components/layout/InputAlert";
 import { AlertCircle } from "~/components/react-icons/AlertCircle";
 import { getLocations } from "~/models/locations.server";
 import { createTheatre } from "~/models/theatre.server";
-import NewRolePage from "../../access/roles/new";
 
 const Model = TheatreModel.extend({
   capacity: z.string().transform((v) => parseInt(v)),
@@ -119,7 +118,7 @@ export function CatchBoundary() {
     });
   }
 
-  return <NewRolePage />;
+  return <NewTheatresPage />;
 }
 
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {

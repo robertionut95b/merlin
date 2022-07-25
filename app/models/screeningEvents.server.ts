@@ -1,4 +1,5 @@
-import type { Prisma, PrismaClient, ScreenEvent } from "@prisma/client";
+import type { Prisma, PrismaClient, ScreenEvent, Seat } from "@prisma/client";
+import { endOfDay, startOfDay } from "date-fns";
 import type { PaginatedResult } from "prisma-pagination";
 import { createPaginator } from "prisma-pagination";
 import { prisma } from "~/db.server";
@@ -42,3 +43,24 @@ export const getUniqueScreeningEvent = async (
 export const updateScreeningEvent = async (
   data: Parameters<PrismaClient["screenEvent"]["update"]>[number]
 ) => prisma.screenEvent.update(data);
+
+export const getBookedSeatsForEvent = async (
+  screeningEventId: string,
+  time: Date
+) => {
+  const tickets = await prisma.ticket.findMany({
+    where: {
+      screenEventId: screeningEventId,
+      time: {
+        gte: startOfDay(time),
+        lt: endOfDay(time),
+      },
+    },
+    include: {
+      seats: true,
+    },
+  });
+  const seats: Seat[] = [];
+  tickets.forEach((t) => seats.push(...t.seats));
+  return seats;
+};

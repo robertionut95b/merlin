@@ -245,13 +245,13 @@ model PricingPolicy {
 }
 
 model Ticket {
-  /// @zod.uuid().optional()
+  /// @zod.optional()
   id            String      @id @default(cuid())
   /// @zod.min(1, {message: "Must have at least one seat"})
   seats         Seat[]
-  /// @zod.min(1, {message: "Must have at least one user"})
   user          User        @relation(fields: [userId], references: [id])
-  userId        String      @unique
+  /// @zod.nonempty()
+  userId        String
   ScreenEvent   ScreenEvent @relation(fields: [screenEventId], references: [id])
   screenEventId String
   time          DateTime
@@ -260,6 +260,8 @@ model Ticket {
   createdAt DateTime @default(now())
   /// @zod.optional()
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, screenEventId, time])
 }
 
 enum RepositoryStatus {

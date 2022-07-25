@@ -2,8 +2,8 @@ import * as z from "zod"
 import { CompleteSeat, RelatedSeatModel, CompleteUser, RelatedUserModel, CompleteScreenEvent, RelatedScreenEventModel } from "./index"
 
 export const TicketModel = z.object({
-  id: z.string().uuid().optional(),
-  userId: z.string(),
+  id: z.string().optional(),
+  userId: z.string().nonempty(),
   screenEventId: z.string(),
   time: z.date(),
   createdAt: z.date().optional(),
@@ -23,6 +23,6 @@ export interface CompleteTicket extends z.infer<typeof TicketModel> {
  */
 export const RelatedTicketModel: z.ZodSchema<CompleteTicket> = z.lazy(() => TicketModel.extend({
   seats: RelatedSeatModel.array().min(1, { message: "Must have at least one seat" }),
-  user: RelatedUserModel.min(1, { message: "Must have at least one user" }),
+  user: RelatedUserModel,
   ScreenEvent: RelatedScreenEventModel,
 }))

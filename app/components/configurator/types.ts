@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma, Seat } from "@prisma/client";
 
 export type TheatreConfiguration = {
   rows: number;
@@ -10,3 +10,13 @@ export type TheatreConfiguration = {
   setRows?: React.Dispatch<React.SetStateAction<number>>;
   setColumns?: React.Dispatch<React.SetStateAction<number>>;
 };
+
+export type ITheatreMapProps = {
+  theatreId?: string;
+  readOnly?: boolean;
+  selectedRows?: object;
+  setSelectedRows?: React.Dispatch<React.SetStateAction<{}>>;
+  reservedSeats?: Seat[];
+  reservingSeats?: Seat[];
+  setReservingSeats?: React.Dispatch<React.SetStateAction<Seat[]>>;
+} & TheatreConfiguration;

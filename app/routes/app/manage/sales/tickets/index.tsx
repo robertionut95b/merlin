@@ -154,6 +154,7 @@ const TicketsPage = (): JSX.Element => {
             total,
           }}
           selection={{
+            onEdit: (_) => alert("Cannot update tickets"),
             onDelete: (_row) =>
               modals.openConfirmModal({
                 title: "Delete ticket",
