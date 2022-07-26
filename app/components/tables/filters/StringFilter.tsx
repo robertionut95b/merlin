@@ -6,7 +6,6 @@ import {
   Group,
   Popover,
   Radio,
-  RadioGroup,
   TextInput,
 } from "@mantine/core";
 import { useSetState } from "@mantine/hooks";
@@ -41,60 +40,57 @@ const StringFilter = (props) => {
     setOpened(false);
   };
   return (
-    <Popover
-      target={
+    <Popover opened={opened} onClose={handleClose} position="bottom" withArrow>
+      <Popover.Target>
         <ActionIcon
-          variant={filterValue ? "light" : "hover"}
+          variant={filterValue ? "light" : "subtle"}
           color={filterValue ? "indigo" : "gray"}
           onClick={() => setOpened((o) => !o)}
         >
           <FilterSvg size={12} />
         </ActionIcon>
-      }
-      opened={opened}
-      onClose={handleClose}
-      onClick={(e) => e.stopPropagation()}
-      position="bottom"
-    >
-      <RadioGroup
-        description="Select your option"
-        orientation="vertical"
-        size="sm"
-        value={state.operator}
-        onChange={(o) => {
-          setState({
-            operator: o as OperatorValues,
-          });
-        }}
-      >
-        <Radio value="contains" label={"Contains"} />
-        <Radio value="notContains" label={"Does not contain"} />
-        <Radio value="startsWith" label={"Starts with"} />
-        <Radio value="endsWith" label={"Ends with"} />
-        <Radio value="equals" label={"Equals"} />
-        <Radio value="not" label={"Not equal"} />
-      </RadioGroup>
-      <Divider my="sm" />
-      <TextInput
-        placeholder="Enter text"
-        mb="sm"
-        data-autofocus
-        value={state.value as string}
-        onChange={(e) => setState({ value: e.target.value })}
-      />
-      <Group position="apart">
-        <Anchor
-          component="button"
-          color="indigo"
-          size="sm"
-          onClick={handleClear}
+      </Popover.Target>
+      <Popover.Dropdown>
+        <Radio.Group
+          description="Select your option"
+          orientation="vertical"
+          size="xs"
+          value={state.operator}
+          onChange={(o) => {
+            setState({
+              operator: o as OperatorValues,
+            });
+          }}
         >
-          Clear
-        </Anchor>
-        <Button size="xs" variant="outline" onClick={handleApply}>
-          Apply
-        </Button>
-      </Group>
+          <Radio value="contains" label={"Contains"} />
+          <Radio value="notContains" label={"Does not contain"} />
+          <Radio value="startsWith" label={"Starts with"} />
+          <Radio value="endsWith" label={"Ends with"} />
+          <Radio value="equals" label={"Equals"} />
+          <Radio value="not" label={"Not equal"} />
+        </Radio.Group>
+        <Divider my="sm" />
+        <TextInput
+          placeholder="Enter text"
+          mb="sm"
+          data-autofocus
+          value={state.value as string}
+          onChange={(e) => setState({ value: e.target.value })}
+        />
+        <Group position="apart">
+          <Anchor
+            component="button"
+            color="indigo"
+            size="sm"
+            onClick={handleClear}
+          >
+            Clear
+          </Anchor>
+          <Button size="xs" variant="outline" onClick={handleApply}>
+            Apply
+          </Button>
+        </Group>
+      </Popover.Dropdown>
     </Popover>
   );
 };

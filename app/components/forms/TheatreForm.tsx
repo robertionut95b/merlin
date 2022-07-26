@@ -1,4 +1,4 @@
-import { Divider } from "@mantine/core";
+import { Tabs } from "@mantine/core";
 import type { Address, Location, Seat, Theatre } from "@prisma/client";
 import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm } from "remix-validated-form";
@@ -6,6 +6,7 @@ import { TheatreModel } from "src/generated/zod";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 import ThreatreConfig from "../configurator/TheatreConfig";
+import { CalendarSVG, MovieSVG } from "../tables/TableIcons";
 import { DateTimeInput } from "../validated-form/DateTimeInput";
 import SelectInput from "../validated-form/SelectInput";
 import { SubmitButton } from "../validated-form/SubmitButton";
@@ -68,32 +69,55 @@ const TheatreForm = ({
           columns: theatre?.columns,
         }}
       >
-        <h4 className="text-lg font-bold">Base properties</h4>
-        <TextInput
-          required
-          name={"name"}
-          label="Name"
-          readOnly={readOnly}
-          defaultValue={theatre?.name}
-        />
-        <SelectInput
-          name="locationId"
-          label="Location"
-          data={locations.map((l) => ({
-            label: `${l.name} - ${l.address.street}, ${l.address.city} ${l.address.country}`,
-            value: l.id,
-          }))}
-          defaultValue={theatre?.locationId}
-          required
-          disabled={readOnly}
-        />
-        <DateTimeInput disabled label="Created" type="date" name="createdAt" />
-        <DateTimeInput disabled label="Updated" type="date" name="updatedAt" />
-        <Divider />
-        <ThreatreConfig
-          readOnly={readOnly}
-          configuration={theatre ? theatre : undefined}
-        />
+        <Tabs defaultValue="base">
+          <Tabs.List>
+            <Tabs.Tab value="base" icon={<CalendarSVG />}>
+              Base
+            </Tabs.Tab>
+            <Tabs.Tab value="theatre" icon={<MovieSVG />}>
+              Theatre configuration
+            </Tabs.Tab>
+          </Tabs.List>
+          <Tabs.Panel className="p-2" value="base">
+            <h4 className="mb-4 text-lg font-bold">Base properties</h4>
+            <TextInput
+              required
+              name={"name"}
+              label="Name"
+              readOnly={readOnly}
+              defaultValue={theatre?.name}
+            />
+            <SelectInput
+              name="locationId"
+              label="Location"
+              data={locations.map((l) => ({
+                label: `${l.name} - ${l.address.street}, ${l.address.city} ${l.address.country}`,
+                value: l.id,
+              }))}
+              defaultValue={theatre?.locationId}
+              required
+              disabled={readOnly}
+            />
+            <DateTimeInput
+              disabled
+              label="Created"
+              type="date"
+              name="createdAt"
+            />
+            <DateTimeInput
+              disabled
+              label="Updated"
+              type="date"
+              name="updatedAt"
+            />
+          </Tabs.Panel>
+          <Tabs.Panel className="p-2" value="theatre">
+            <ThreatreConfig
+              readOnly={readOnly}
+              configuration={theatre ? theatre : undefined}
+            />
+          </Tabs.Panel>
+        </Tabs>
         {!readOnly && (
           <SubmitButton
             className={"place-self-start"}

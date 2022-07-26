@@ -12,7 +12,7 @@ import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { authorizationLoader } from "src/helpers/remix.rbac";
-import TheatreLegend from "~/components/configurator/legend/theatreLegend";
+import TheatreLegend from "~/components/configurator/legend/TheatreLegend";
 import TheatreMap from "~/components/configurator/theatre/TheatreMap";
 import TicketForm from "~/components/forms/TicketForm";
 import { getScreeningEvents } from "~/models/screeningEvents.server";

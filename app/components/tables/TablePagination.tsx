@@ -28,9 +28,6 @@ export const TablePagination = ({
       </span>
       <Pagination
         initialPage={initialPage}
-        classNames={{
-          active: "bg-indigo-700",
-        }}
         total={pageCount}
         page={page}
         withControls

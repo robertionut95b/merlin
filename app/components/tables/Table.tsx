@@ -223,9 +223,11 @@ const Table = <T,>({
             <tr {...headerGroup.getHeaderGroupProps()} key={idx}>
               {headerGroup.headers.map((column, jdx) => (
                 <th {...column.getHeaderProps()} key={jdx}>
-                  {column.render("Header")}
-                  {/* @ts-expect-error("react-table-types") */}
-                  {column.canFilter ? column.render("Filter") : null}
+                  <div className="flex items-center">
+                    {column.render("Header")}
+                    {/* @ts-expect-error("react-table-types") */}
+                    {column.canFilter ? column.render("Filter") : null}
+                  </div>
                 </th>
               ))}
             </tr>

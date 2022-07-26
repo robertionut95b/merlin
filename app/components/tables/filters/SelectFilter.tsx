@@ -43,53 +43,50 @@ export const SelectFilter = <T,>({
   };
 
   return (
-    <Popover
-      target={
+    <Popover opened={opened} onClose={handleClose} position="bottom">
+      <Popover.Target>
         <ActionIcon
-          variant={filterValue ? "light" : "hover"}
+          variant={filterValue ? "light" : "subtle"}
           color={filterValue ? "indigo" : "gray"}
           onClick={() => setOpened((o) => !o)}
         >
           <FilterSvg size={12} />
         </ActionIcon>
-      }
-      opened={opened}
-      onClose={handleClose}
-      onClick={(e) => e.stopPropagation()}
-      position="bottom"
-    >
-      <Select
-        data={options}
-        value={state.value as string}
-        onChange={(value) =>
-          setState({ operator: OperatorValues.EQUAL, value: value as string })
-        }
-        disabled={options?.length === 0}
-        placeholder={
-          options?.length === 0 ? "No options provided" : "Select option"
-        }
-        label="Options"
-      />
-      <Divider my="sm" />
-      <Group position="apart">
-        <Anchor
-          component="button"
-          color="indigo"
-          size="sm"
-          onClick={handleClear}
+      </Popover.Target>
+      <Popover.Dropdown>
+        <Select
+          data={options}
+          value={state.value as string}
+          onChange={(value) =>
+            setState({ operator: OperatorValues.EQUAL, value: value as string })
+          }
           disabled={options?.length === 0}
-        >
-          Clear
-        </Anchor>
-        <Button
-          size="xs"
-          variant="outline"
-          onClick={handleApply}
-          disabled={options?.length === 0}
-        >
-          Apply
-        </Button>
-      </Group>
+          placeholder={
+            options?.length === 0 ? "No options provided" : "Select option"
+          }
+          label="Options"
+        />
+        <Divider my="sm" />
+        <Group position="apart">
+          <Anchor
+            component="button"
+            color="indigo"
+            size="sm"
+            onClick={handleClear}
+            disabled={options?.length === 0}
+          >
+            Clear
+          </Anchor>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={handleApply}
+            disabled={options?.length === 0}
+          >
+            Apply
+          </Button>
+        </Group>
+      </Popover.Dropdown>
     </Popover>
   );
 };

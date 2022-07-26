@@ -1,7 +1,7 @@
 import FullCalendar from "@fullcalendar/react";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { Loader, Modal, Select } from "@mantine/core";
+import { Loader, Modal, NativeSelect, Select } from "@mantine/core";
 import type {
   Location,
   PricingPolicy,
@@ -225,15 +225,15 @@ export default function CalendarPage() {
             />
           </div>
           <div className="theatre-selector">
-            <Select
+            <NativeSelect
               label="Theatre"
               defaultValue={selectedTheatre?.id}
               data={theatres.map((t) => ({
                 label: `${t.name} - ${t.location.name}`,
                 value: t.id,
               }))}
-              onChange={(v) => {
-                setSelectedTheatre(theatres?.find((t) => t.id === v));
+              onChange={(e) => {
+                setSelectedTheatre(theatres?.find((t) => t.id === e.target.value));
               }}
             />
           </div>

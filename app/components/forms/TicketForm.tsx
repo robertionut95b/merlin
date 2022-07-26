@@ -9,11 +9,9 @@ import type {
   User,
 } from "@prisma/client";
 import { withZod } from "@remix-validated-form/with-zod";
-import { addDays, addMinutes, parse } from "date-fns";
 import { useState } from "react";
 import { AuthenticityTokenInput } from "remix-utils";
 import { ValidatedForm } from "remix-validated-form";
-import { dayStringToNumber } from "src/helpers/fullcalendar";
 import { zfd } from "zod-form-data";
 import { TicketModelForm } from "~/models/validators/ticket.validator";
 import { DateTimeInput } from "../validated-form/DateTimeInput";
@@ -122,27 +120,10 @@ export default function TicketForm({
           name={"time"}
           label={"Time"}
           required
-          disabled={readOnly || !selectedScreenEvent}
+          readOnly={readOnly}
           defaultValue={time}
           placeholder="8 June, 2022"
-          excludeDate={(date) => {
-            if (selectedScreenEvent) {
-              const intDays = selectedScreenEvent.daysOfWeek.map((ds) =>
-                dayStringToNumber(ds)
-              );
-              return !intDays.includes(date.getDay());
-            }
-            return false;
-          }}
-          minDate={
-            (parse(
-              selectedScreenEvent?.startTime || "00:00:00",
-              "HH:mm:ss",
-              new Date()
-            ) < addMinutes(new Date(), 15) &&
-              addDays(new Date(), 1)) ||
-            new Date()
-          }
+          clearable={false}
         />
         <DateTimeInput
           disabled

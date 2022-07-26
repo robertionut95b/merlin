@@ -8,9 +8,8 @@ type ITextInputProps = DatePickerProps & {
 };
 
 export const DateTimeInput = (props: ITextInputProps) => {
-  const { name, defaultValue } = props;
+  const { name } = props;
   const { error, getInputProps } = useField(name);
-  console.log(defaultValue);
   return (
     <DatePicker {...getInputProps({ id: name })} {...props} error={error} />
   );

@@ -1,4 +1,4 @@
-import { Button, Menu, MenuLabel, Divider } from "@mantine/core";
+import { Button, Divider, Menu } from "@mantine/core";
 import { DeleteSvg, FileSvg } from "./TableIcons";
 
 interface ITableSelectionProps<T> {
@@ -17,34 +17,35 @@ export const TableSelection = <T,>({
   onExportAll,
 }: ITableSelectionProps<T>): JSX.Element => {
   return (
-    <Menu
-      control={
+    <Menu>
+      <Menu.Target>
         <Button variant={"light"} color="indigo" compact>
           {Object.keys(selectedRowIds).length > 0
             ? `Selected: ${Object.keys(selectedRowIds).length}`
             : ""}
         </Button>
-      }
-    >
-      <MenuLabel>Actions</MenuLabel>
-      <Menu.Item icon={<FileSvg />} onClick={() => onExportAll?.()}>
-        Export all
-      </Menu.Item>
-      <Menu.Item
-        icon={<FileSvg />}
-        onClick={() => onExportMany?.(selectedRows)}
-      >
-        Export selected
-      </Menu.Item>
-      <Divider />
-      <Menu.Label>Undoable</Menu.Label>
-      <Menu.Item
-        icon={<DeleteSvg />}
-        color={"red"}
-        onClick={() => onDeleteMany?.(selectedRows)}
-      >
-        Delete records
-      </Menu.Item>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Label>Actions</Menu.Label>
+        <Menu.Item icon={<FileSvg />} onClick={() => onExportAll?.()}>
+          Export all
+        </Menu.Item>
+        <Menu.Item
+          icon={<FileSvg />}
+          onClick={() => onExportMany?.(selectedRows)}
+        >
+          Export selected
+        </Menu.Item>
+        <Divider />
+        <Menu.Label>Undoable</Menu.Label>
+        <Menu.Item
+          icon={<DeleteSvg />}
+          color={"red"}
+          onClick={() => onDeleteMany?.(selectedRows)}
+        >
+          Delete records
+        </Menu.Item>
+      </Menu.Dropdown>
     </Menu>
   );
 };

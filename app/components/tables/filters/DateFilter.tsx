@@ -6,7 +6,6 @@ import {
   Group,
   Popover,
   Radio,
-  RadioGroup,
 } from "@mantine/core";
 import { DatePicker } from "@mantine/dates";
 import { useSetState } from "@mantine/hooks";
@@ -46,70 +45,67 @@ const DateFilter = <T,>(props: {
   };
 
   return (
-    <Popover
-      target={
+    <Popover opened={opened} onClose={handleClose} position="bottom">
+      <Popover.Target>
         <ActionIcon
-          variant={filterValue ? "light" : "hover"}
+          variant={filterValue ? "light" : "subtle"}
           color={filterValue ? "indigo" : "gray"}
           onClick={() => setOpened((o) => !o)}
         >
           <FilterSvg size={12} />
         </ActionIcon>
-      }
-      opened={opened}
-      onClose={handleClose}
-      onClick={(e) => e.stopPropagation()}
-      position="bottom"
-    >
-      <RadioGroup
-        description="Select your option"
-        orientation="vertical"
-        size="sm"
-        value={state.operator}
-        onChange={(o) => setState({ operator: o as OperatorValues })}
-      >
-        <Radio value="equals" label={"Equals"} />
-        <Radio value="not" label={"Not equals"} />
-        <Radio value="gt" label={"After"} />
-        <Radio value="gte" label={"After or on"} />
-        <Radio value="lt" label={"Before"} />
-        <Radio value="lte" label={"Before or on"} />
-      </RadioGroup>
-      <Divider my="sm" />
-      <DatePicker
-        placeholder="Pick date"
-        mb="sm"
-        withinPortal={false}
-        icon={<CalendarSVG />}
-        value={
-          typeof state.value === "string"
-            ? state.value !== ""
-              ? new Date(state.value)
-              : null
-            : state.value
-        }
-        onChange={(val) =>
-          setState({
-            value: isValidDate(val as Date)
-              ? format?.(val as Date, "yyyy-MM-dd")
-              : undefined,
-          })
-        }
-      />
-
-      <Group position="apart">
-        <Anchor
-          component="button"
-          color="indigo"
+      </Popover.Target>
+      <Popover.Dropdown>
+        <Radio.Group
+          description="Select your option"
+          orientation="vertical"
           size="sm"
-          onClick={handleClear}
+          value={state.operator}
+          onChange={(o) => setState({ operator: o as OperatorValues })}
         >
-          Clear
-        </Anchor>
-        <Button size="xs" variant="outline" onClick={handleApply}>
-          Apply
-        </Button>
-      </Group>
+          <Radio value="equals" label={"Equals"} />
+          <Radio value="not" label={"Not equals"} />
+          <Radio value="gt" label={"After"} />
+          <Radio value="gte" label={"After or on"} />
+          <Radio value="lt" label={"Before"} />
+          <Radio value="lte" label={"Before or on"} />
+        </Radio.Group>
+        <Divider my="sm" />
+        <DatePicker
+          placeholder="Pick date"
+          mb="sm"
+          withinPortal={false}
+          icon={<CalendarSVG />}
+          value={
+            typeof state.value === "string"
+              ? state.value !== ""
+                ? new Date(state.value)
+                : null
+              : state.value
+          }
+          onChange={(val) =>
+            setState({
+              value: isValidDate(val as Date)
+                ? format?.(val as Date, "yyyy-MM-dd")
+                : undefined,
+            })
+          }
+        />
+
+        <Group position="apart">
+          <Anchor
+            component="button"
+            color="indigo"
+            size="sm"
+            onClick={handleClear}
+          >
+            Clear
+          </Anchor>
+          <Button size="xs" variant="outline" onClick={handleApply}>
+            Apply
+          </Button>
+        </Group>
+      </Popover.Dropdown>
     </Popover>
   );
 };

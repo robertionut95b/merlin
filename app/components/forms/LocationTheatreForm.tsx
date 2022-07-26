@@ -1,13 +1,13 @@
 import FullCalendar from "@fullcalendar/react";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { Select } from "@mantine/core";
+import { NativeSelect } from "@mantine/core";
 import type { Location, ScreenEvent, Screening, Theatre } from "@prisma/client";
 import { useLocation, useNavigate } from "@remix-run/react";
+import { format } from "date-fns";
 import { useMemo, useState } from "react";
 import { ClientOnly } from "remix-utils";
 import { dayStringToNumber } from "src/helpers/fullcalendar";
-import { format } from 'date-fns';
 
 export default function LocationTheatreForm({
   screenEvents,
@@ -43,7 +43,7 @@ export default function LocationTheatreForm({
           </div>
         </div>
         <div className="content flex flex-col gap-y-4">
-          <Select
+          <NativeSelect
             className="md:max-w-xl"
             name="theatre"
             label="Theatre"
@@ -53,8 +53,10 @@ export default function LocationTheatreForm({
               value: t.id,
             }))}
             value={selectedTheatre?.id}
-            onChange={(v) =>
-              setSelectedTheatre(theatres.find((th) => th.id === v) || null)
+            onChange={(e) =>
+              setSelectedTheatre(
+                theatres.find((th) => th.id === e.currentTarget.value) || null
+              )
             }
           />
           <ClientOnly>
@@ -88,7 +90,12 @@ export default function LocationTheatreForm({
                     if ((info.event.start || new Date()) < new Date()) {
                       return alert("Cannot create a ticket for a passed event");
                     }
-                    navigation(`${location.pathname}/${info.event.groupId}/${format(info.event.start || new Date, "yyyy-MM-dd'T'HH:mm")}`);
+                    navigation(
+                      `${location.pathname}/${info.event.groupId}/${format(
+                        info.event.start || new Date(),
+                        "yyyy-MM-dd'T'HH:mm"
+                      )}`
+                    );
                   }}
                 />
               )

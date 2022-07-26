@@ -18,29 +18,28 @@ const SidebarItem = ({
 
   if (minimal) {
     return (
-      <Menu
-        trigger="hover"
-        position="right"
-        control={
+      <Menu trigger="hover" position="right">
+        <Menu.Target>
           <NavLink
             to={url}
             className={`menu-item my-2 flex rounded-lg p-1.5 text-sm font-semibold hover:bg-gray-300 hover:text-white dark:hover:bg-indigo-700`}
           >
             {icon}
           </NavLink>
-        }
-      >
-        <Menu.Label> {name}</Menu.Label>
-        {items?.map((item, idx) => (
-          <NavLink to={item.url} key={idx} prefetch="intent">
-            <Menu.Item
-              className={`hover:bg-gray-300 hover:text-white dark:hover:bg-indigo-700`}
-              icon={item.icon}
-            >
-              {item.name}
-            </Menu.Item>
-          </NavLink>
-        ))}
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>{name}</Menu.Label>
+          {items?.map((item, idx) => (
+            <NavLink to={item.url} key={idx} prefetch="intent">
+              <Menu.Item
+                className={`hover:bg-gray-300 hover:text-white dark:hover:bg-indigo-700`}
+                icon={item.icon}
+              >
+                {item.name}
+              </Menu.Item>
+            </NavLink>
+          ))}
+        </Menu.Dropdown>
       </Menu>
     );
   } else

@@ -103,27 +103,28 @@ const LongArrowDownSvg = () => (
 
 export const UserAvatar = ({ user }: { user: User }) => {
   return (
-    <Menu
-      control={
+    <Menu width={250}>
+      <Menu.Target>
         <Avatar color="indigo" radius="xl" size={32}>
           {user?.email?.[0]?.toUpperCase()}
         </Avatar>
-      }
-    >
-      <Menu.Label>Profile</Menu.Label>
-      <Menu.Item icon={<UserSvg />}>
-        <NavLink to="/user/profile">My user</NavLink>
-      </Menu.Item>
-      <Menu.Item icon={<SettingsSvg />}>
-        <NavLink to="/user/settings">Settings</NavLink>
-      </Menu.Item>
-      <Menu.Item icon={<GroupSvg />}>
-        <NavLink to="/user/organization">Team & Organization</NavLink>
-      </Menu.Item>
-      <Menu.Label>Session</Menu.Label>
-      <Menu.Item icon={<LongArrowDownSvg />}>
-        <NavLink to="/logout">Log out</NavLink>
-      </Menu.Item>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Label>Profile</Menu.Label>
+        <Menu.Item icon={<UserSvg />}>
+          <NavLink to="/user/profile">My user</NavLink>
+        </Menu.Item>
+        <Menu.Item icon={<SettingsSvg />}>
+          <NavLink to="/user/settings">Settings</NavLink>
+        </Menu.Item>
+        <Menu.Item icon={<GroupSvg />}>
+          <NavLink to="/user/organization">Team & Organization</NavLink>
+        </Menu.Item>
+        <Menu.Label>Session</Menu.Label>
+        <Menu.Item icon={<LongArrowDownSvg />}>
+          <NavLink to="/logout">Log out</NavLink>
+        </Menu.Item>
+      </Menu.Dropdown>
     </Menu>
   );
 };

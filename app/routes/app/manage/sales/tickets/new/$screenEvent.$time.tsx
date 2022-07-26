@@ -1,4 +1,4 @@
-import { Badge } from "@mantine/core";
+import { Badge, Tabs } from "@mantine/core";
 import type {
   Location,
   ScreenEvent,
@@ -19,6 +19,7 @@ import { zfd } from "zod-form-data";
 import TheatreLegend from "~/components/configurator/legend/TheatreLegend";
 import TheatreMap from "~/components/configurator/theatre/TheatreMap";
 import TicketForm from "~/components/forms/TicketForm";
+import { CalendarSVG, MovieSVG } from "~/components/tables/TableIcons";
 import { getUniqueScreeningEvent } from "~/models/screeningEvents.server";
 import { getSeats } from "~/models/seats.server";
 import { createTicket } from "~/models/tickets.server";
@@ -112,6 +113,12 @@ export const loader: LoaderFunction = async (args) => {
         });
       }
 
+      if (new Date() > new Date(time)) {
+        throw new Response("Cannot book tickets for a passed event", {
+          status: 403,
+        });
+      }
+
       const reservedSeats = await getSeats({
         where: {
           Ticket: {
@@ -152,8 +159,16 @@ export default function NewTicketLocationScreenEventPage() {
   const [seats, setSeats] = useState<Seat[]>([]);
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div>
+    <Tabs defaultValue="base">
+      <Tabs.List>
+        <Tabs.Tab value="base" icon={<CalendarSVG />}>
+          Base
+        </Tabs.Tab>
+        <Tabs.Tab value="seats" disabled={!theatre} icon={<MovieSVG />}>
+          Seats
+        </Tabs.Tab>
+      </Tabs.List>
+      <Tabs.Panel className="p-2" value="base">
         <TicketForm
           users={users}
           screenEvents={[screenEvent]}
@@ -168,28 +183,30 @@ export default function NewTicketLocationScreenEventPage() {
             />
           ))}
         </TicketForm>
-      </div>
+      </Tabs.Panel>
       {theatre && (
-        <div className="col-span-2 flex flex-col gap-y-2">
-          <h3 className="text-xl font-bold">Theatre</h3>
-          <Badge
-            className="self-start"
-            color="indigo"
-            radius="sm"
-          >{`${theatre.name} - ${theatre.location.name}`}</Badge>
-          <span className="text-sm font-thin">Reserved seats</span>
-          <TheatreMap
-            rows={theatre.rows}
-            columns={theatre.columns}
-            seats={theatre.seats}
-            reservingSeats={seats}
-            reservedSeats={reservedSeats}
-            setReservingSeats={setSeats}
-            theatreId={theatre.id}
-          />
-          <TheatreLegend />
-        </div>
+        <Tabs.Panel className="p-2" value="seats">
+          <div className="col-span-2 flex flex-col gap-y-2">
+            <h3 className="text-xl font-bold">Theatre</h3>
+            <Badge
+              className="self-start"
+              color="indigo"
+              radius="sm"
+            >{`${theatre.name} - ${theatre.location.name}`}</Badge>
+            <span className="text-sm font-thin">Reserved seats</span>
+            <TheatreMap
+              rows={theatre.rows}
+              columns={theatre.columns}
+              seats={theatre.seats}
+              reservingSeats={seats}
+              reservedSeats={reservedSeats}
+              setReservingSeats={setSeats}
+              theatreId={theatre.id}
+            />
+            <TheatreLegend />
+          </div>
+        </Tabs.Panel>
       )}
-    </div>
+    </Tabs>
   );
 }

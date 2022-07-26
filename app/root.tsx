@@ -1,6 +1,7 @@
 import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { NotificationsProvider } from "@mantine/notifications";
+import { StylesPlaceholder } from "@mantine/remix";
 import type { Permission } from "@prisma/client";
 import type {
   LinksFunction,
@@ -58,7 +59,7 @@ interface LoaderProps {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const user = await authenticator.isAuthenticated(request);
-  var permissions: Permission[] = [];
+  let permissions: Permission[] = [];
   let session = await getSession(request.headers.get("cookie"));
   const csrf = createAuthenticityToken(session);
 
@@ -84,18 +85,21 @@ export const loader: LoaderFunction = async ({ request }) => {
 const App = (): JSX.Element => {
   const { user, permissions, csrf } = useLoaderData<LoaderProps>();
   return (
-    <html lang="en" className="h-full font-inter">
-      <head>
-        <Meta />
-        <Links />
-      </head>
-      <body className="h-full">
-        <MantineProvider
-          theme={{
-            primaryColor: "indigo",
-            fontFamily: "inherit",
-          }}
-        >
+    <MantineProvider
+      theme={{
+        primaryColor: "indigo",
+        fontFamily: "inherit",
+      }}
+      withGlobalStyles
+      withNormalizeCSS
+    >
+      <html lang="en" className="h-full font-inter">
+        <head>
+          <Meta />
+          <Links />
+          <StylesPlaceholder />
+        </head>
+        <body className="h-full">
           <ModalsProvider>
             <NotificationsProvider>
               <AuthenticityTokenProvider token={csrf}>
@@ -105,12 +109,12 @@ const App = (): JSX.Element => {
               </AuthenticityTokenProvider>
             </NotificationsProvider>
           </ModalsProvider>
-        </MantineProvider>
-        <ScrollRestoration />
-        <Scripts />
-        {process.env.NODE_ENV === "development" && <LiveReload />}
-      </body>
-    </html>
+          <ScrollRestoration />
+          <Scripts />
+          {process.env.NODE_ENV === "development" && <LiveReload />}
+        </body>
+      </html>
+    </MantineProvider>
   );
 };
 
