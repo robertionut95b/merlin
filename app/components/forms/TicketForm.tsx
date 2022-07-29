@@ -15,6 +15,7 @@ import { ValidatedForm } from "remix-validated-form";
 import { zfd } from "zod-form-data";
 import { TicketModelForm } from "~/models/validators/ticket.validator";
 import { DateTimeInput } from "../validated-form/DateTimeInput";
+import { DateTimePickerInput } from "../validated-form/DateTimePickerInput";
 import SelectScreenEventDate from "../validated-form/select-items/SelectScreenEventDate";
 import SelectInput from "../validated-form/SelectInput";
 import { SubmitButton } from "../validated-form/SubmitButton";
@@ -116,7 +117,7 @@ export default function TicketForm({
             )
           }
         />
-        <DateTimeInput
+        {/* <DateTimeInput
           name={"time"}
           label={"Time"}
           required
@@ -124,6 +125,15 @@ export default function TicketForm({
           defaultValue={time}
           placeholder="8 June, 2022"
           clearable={false}
+        /> */}
+        <DateTimePickerInput
+          name={"time"}
+          label="Date"
+          className="w-full"
+          required
+          clearable={false}
+          defaultValue={time}
+          readOnly={readOnly}
         />
         <DateTimeInput
           disabled

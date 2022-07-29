@@ -8,7 +8,7 @@ import type {
   User,
 } from "@prisma/client";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { endOfDay, parse, startOfDay } from "date-fns";
@@ -20,9 +20,9 @@ import TheatreLegend from "~/components/configurator/legend/TheatreLegend";
 import TheatreMap from "~/components/configurator/theatre/TheatreMap";
 import TicketForm from "~/components/forms/TicketForm";
 import { CalendarSVG, MovieSVG } from "~/components/tables/TableIcons";
+import { FormErrors } from "~/components/validated-form/FormErrors";
 import { getUniqueScreeningEvent } from "~/models/screeningEvents.server";
 import { getSeats } from "~/models/seats.server";
-import { createTicket } from "~/models/tickets.server";
 import { getUsers } from "~/models/user.server";
 import { ServerTicketModelForm } from "~/models/validators/ticket.validator";
 
@@ -54,22 +54,23 @@ export const action: ActionFunction = async ({ request }) => {
     return rest;
   });
 
-  await createTicket({
-    data: {
-      ...result.data,
-      seats: {
-        connect: validSeats.map((v) => ({
-          row_column_theatreId: {
-            column: v.column,
-            row: v.row,
-            theatreId: v.theatreId,
-          },
-        })),
-      },
-    },
-  });
+  // await createTicket({
+  //   data: {
+  //     ...result.data,
+  //     seats: {
+  //       connect: validSeats.map((v) => ({
+  //         row_column_theatreId: {
+  //           column: v.column,
+  //           row: v.row,
+  //           theatreId: v.theatreId,
+  //         },
+  //       })),
+  //     },
+  //   },
+  // });
 
-  return redirect(`/app/manage/sales/tickets`);
+  // return redirect(`/app/manage/sales/tickets`);
+  return {};
 };
 
 export const loader: LoaderFunction = async (args) => {
@@ -182,6 +183,7 @@ export default function NewTicketLocationScreenEventPage() {
               value={JSON.stringify(seat)}
             />
           ))}
+          <FormErrors />
         </TicketForm>
       </Tabs.Panel>
       {theatre && (
@@ -193,7 +195,8 @@ export default function NewTicketLocationScreenEventPage() {
               color="indigo"
               radius="sm"
             >{`${theatre.name} - ${theatre.location.name}`}</Badge>
-            <span className="text-sm font-thin">Reserved seats</span>
+            <span className="text-sm font-thin">Reserve seats</span>
+            <TheatreLegend />
             <TheatreMap
               rows={theatre.rows}
               columns={theatre.columns}
@@ -203,7 +206,6 @@ export default function NewTicketLocationScreenEventPage() {
               setReservingSeats={setSeats}
               theatreId={theatre.id}
             />
-            <TheatreLegend />
           </div>
         </Tabs.Panel>
       )}

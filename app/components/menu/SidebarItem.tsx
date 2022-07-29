@@ -18,7 +18,7 @@ const SidebarItem = ({
 
   if (minimal) {
     return (
-      <Menu trigger="hover" position="right">
+      <Menu trigger="hover" position="right" width={200}>
         <Menu.Target>
           <NavLink
             to={url}
