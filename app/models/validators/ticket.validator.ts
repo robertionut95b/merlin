@@ -1,8 +1,12 @@
-import { parse } from "date-fns";
+import { isSameHour, isSameMinute, parse } from "date-fns";
 import { SeatModel, TicketModel } from "src/generated/zod";
+import { parseStringTime } from "src/helpers/dates";
 import * as z from "zod";
 import { zfd } from "zod-form-data";
-import { getBookedSeatsForEvent } from "../screeningEvents.server";
+import {
+  getBookedSeatsForEvent,
+  getUniqueScreeningEvent,
+} from "../screeningEvents.server";
 
 const SeatModelWithDates = SeatModel.extend({
   createdAt: z.string().transform((v) => new Date(v)),
@@ -11,6 +15,9 @@ const SeatModelWithDates = SeatModel.extend({
 
 export const TicketModelForm = TicketModel.extend({
   time: z.string().transform((v) => parse(v, "LLLL dd, yyyy", new Date())),
+  time__time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: "Invalid time value, must follow HH:mm format",
+  }),
   // seats: zfd.repeatableOfType(SeatModel),
   seats: zfd.json(
     zfd.repeatable(
@@ -20,8 +27,8 @@ export const TicketModelForm = TicketModel.extend({
     )
   ),
 }).superRefine(async (val, ctx) => {
-  console.log(val.time);
-  if (new Date() >= val.time) {
+  const eventTime = parseStringTime(val.time__time, val.time);
+  if (new Date() >= eventTime) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["time"],
@@ -44,5 +51,26 @@ export const ServerTicketModelForm = TicketModelForm.refine(
   {
     message: "Seat(s) are already booked",
     path: ["seats"],
+  }
+).refine(
+  async (data) => {
+    const screeningEvent = await getUniqueScreeningEvent({
+      where: {
+        id: data.screenEventId,
+      },
+    });
+
+    if (screeningEvent && screeningEvent.startTime) {
+      const startTime = parse(screeningEvent.startTime, "HH:mm:ss", new Date());
+      const valTime = parseStringTime(data.time__time, data.time);
+
+      return isSameHour(startTime, valTime) && isSameMinute(startTime, valTime);
+    }
+
+    return false;
+  },
+  {
+    message: "Starting time does not match the event",
+    path: ["time"],
   }
 );

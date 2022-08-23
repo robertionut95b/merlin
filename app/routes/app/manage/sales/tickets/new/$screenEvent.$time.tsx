@@ -8,12 +8,12 @@ import type {
   User,
 } from "@prisma/client";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { endOfDay, parse, startOfDay } from "date-fns";
-import { useState } from "react";
-import { validDateOrUndefined } from "src/helpers/dates";
+import { useMemo, useState } from "react";
+import { parseStringTime, validDateOrUndefined } from "src/helpers/dates";
 import { authorizationLoader, IsAllowedAccess } from "src/helpers/remix.rbac";
 import { zfd } from "zod-form-data";
 import TheatreLegend from "~/components/configurator/legend/TheatreLegend";
@@ -23,6 +23,7 @@ import { CalendarSVG, MovieSVG } from "~/components/tables/TableIcons";
 import { FormErrors } from "~/components/validated-form/FormErrors";
 import { getUniqueScreeningEvent } from "~/models/screeningEvents.server";
 import { getSeats } from "~/models/seats.server";
+import { createTicket } from "~/models/tickets.server";
 import { getUsers } from "~/models/user.server";
 import { ServerTicketModelForm } from "~/models/validators/ticket.validator";
 
@@ -41,36 +42,37 @@ export const action: ActionFunction = async ({ request }) => {
   const result = await serverValidator.validate(await request.formData());
   const inputSeats = result?.data?.seats || [];
 
-  console.log(result);
-
   if (!result.data) {
     throw new Response("Invalid data input", {
       status: 400,
     });
   }
 
+  const { time__time, ...sanitizedResults } = result.data;
+
+  const timeDate = parseStringTime(result.data.time__time, result.data.time);
   const validSeats = inputSeats.map((s) => {
     const { ticketId, ...rest } = s;
     return rest;
   });
 
-  // await createTicket({
-  //   data: {
-  //     ...result.data,
-  //     seats: {
-  //       connect: validSeats.map((v) => ({
-  //         row_column_theatreId: {
-  //           column: v.column,
-  //           row: v.row,
-  //           theatreId: v.theatreId,
-  //         },
-  //       })),
-  //     },
-  //   },
-  // });
+  await createTicket({
+    data: {
+      ...sanitizedResults,
+      time: timeDate,
+      seats: {
+        connect: validSeats.map((v) => ({
+          row_column_theatreId: {
+            column: v.column,
+            row: v.row,
+            theatreId: v.theatreId,
+          },
+        })),
+      },
+    },
+  });
 
-  // return redirect(`/app/manage/sales/tickets`);
-  return {};
+  return redirect(`/app/manage/sales/tickets`);
 };
 
 export const loader: LoaderFunction = async (args) => {
@@ -156,8 +158,13 @@ export default function NewTicketLocationScreenEventPage() {
     reservedSeats: Seat[];
   }>();
 
-  const theatre = screenEvent.theatres?.[0];
   const [seats, setSeats] = useState<Seat[]>([]);
+  const memoTime = useMemo(() => new Date(time), [time]);
+  const memoScreenEvents = useMemo(() => [screenEvent], [screenEvent]);
+  const theatre = useMemo(
+    () => screenEvent.theatres?.[0],
+    [screenEvent.theatres]
+  );
 
   return (
     <Tabs defaultValue="base">
@@ -172,8 +179,8 @@ export default function NewTicketLocationScreenEventPage() {
       <Tabs.Panel className="p-2" value="base">
         <TicketForm
           users={users}
-          screenEvents={[screenEvent]}
-          time={new Date(time)}
+          screenEvents={memoScreenEvents}
+          time={memoTime}
         >
           {seats.map((seat, idx) => (
             <input

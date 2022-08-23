@@ -1,3 +1,4 @@
+import { Badge } from "@mantine/core";
 import { useModals } from "@mantine/modals";
 import type { PricingPolicy } from "@prisma/client";
 import type { LoaderFunction } from "@remix-run/node";
@@ -59,8 +60,11 @@ export default function PricesPage() {
         {
           Header: "Ticket type",
           accessor: "ticketType",
-          Cell: (row: any) =>
-            row.value.replace("Two", "2").replace("Three", "3"),
+          Cell: (row: any) => (
+            <Badge variant="outline">
+              {row.value.replace("Two", "2").replace("Three", "3")}
+            </Badge>
+          ),
         },
         {
           Header: "Price",

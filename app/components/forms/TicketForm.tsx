@@ -1,6 +1,5 @@
 import type { Ticket } from ".prisma/client";
 import { Button, Group } from "@mantine/core";
-import { useModals } from "@mantine/modals";
 import type {
   Location,
   ScreenEvent,
@@ -8,6 +7,7 @@ import type {
   Theatre,
   User,
 } from "@prisma/client";
+import { useLocation } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
 import { useState } from "react";
 import { AuthenticityTokenInput } from "remix-utils";
@@ -43,10 +43,10 @@ export default function TicketForm({
   time?: Date;
   children?: React.ReactNode;
 }) {
-  const modals = useModals();
   const [selectedScreenEvent, setSelectedScreenEvent] = useState<
     typeof screenEvents[number] | null
   >(screenEvents?.[0] || null);
+  const { pathname } = useLocation();
   return (
     <>
       <div className="ticket-form">
@@ -117,15 +117,6 @@ export default function TicketForm({
             )
           }
         />
-        {/* <DateTimeInput
-          name={"time"}
-          label={"Time"}
-          required
-          readOnly={readOnly}
-          defaultValue={time}
-          placeholder="8 June, 2022"
-          clearable={false}
-        /> */}
         <DateTimePickerInput
           name={"time"}
           label="Date"
@@ -160,25 +151,8 @@ export default function TicketForm({
             variant="outline"
             disabled={readOnly}
           />
-          <Button
-            variant="outline"
-            className="mt-2"
-            disabled={!ticket}
-            onClick={() =>
-              modals.openConfirmModal({
-                title: `Print ticket`,
-                centered: true,
-                confirmProps: {
-                  variant: "light",
-                  color: "indigo",
-                },
-                children: <>Please see a preview of the ticket</>,
-                labels: { confirm: "Confirm", cancel: "Cancel" },
-                onCancel: () => null,
-                onConfirm: () => null,
-              })
-            }
-          >
+          <a href={`${pathname}/print`}>Print ticket</a>
+          <Button variant="outline" className="mt-2" disabled={!ticket}>
             Print ticket
           </Button>
         </Group>

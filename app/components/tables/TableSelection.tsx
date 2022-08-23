@@ -16,36 +16,38 @@ export const TableSelection = <T,>({
   onExportMany,
   onExportAll,
 }: ITableSelectionProps<T>): JSX.Element => {
-  return (
-    <Menu>
-      <Menu.Target>
-        <Button variant={"light"} color="indigo" compact>
-          {Object.keys(selectedRowIds).length > 0
-            ? `Selected: ${Object.keys(selectedRowIds).length}`
-            : ""}
-        </Button>
-      </Menu.Target>
-      <Menu.Dropdown>
-        <Menu.Label>Actions</Menu.Label>
-        <Menu.Item icon={<FileSvg />} onClick={() => onExportAll?.()}>
-          Export all
-        </Menu.Item>
-        <Menu.Item
-          icon={<FileSvg />}
-          onClick={() => onExportMany?.(selectedRows)}
-        >
-          Export selected
-        </Menu.Item>
-        <Divider />
-        <Menu.Label>Undoable</Menu.Label>
-        <Menu.Item
-          icon={<DeleteSvg />}
-          color={"red"}
-          onClick={() => onDeleteMany?.(selectedRows)}
-        >
-          Delete records
-        </Menu.Item>
-      </Menu.Dropdown>
-    </Menu>
-  );
+  if (selectedRows.length === 0) return <div>{` `}</div>;
+  else
+    return (
+      <Menu>
+        <Menu.Target>
+          <Button variant={"light"} color="indigo" compact>
+            {Object.keys(selectedRowIds).length > 0
+              ? `Selected: ${Object.keys(selectedRowIds).length}`
+              : ""}
+          </Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>Actions</Menu.Label>
+          <Menu.Item icon={<FileSvg />} onClick={() => onExportAll?.()}>
+            Export all
+          </Menu.Item>
+          <Menu.Item
+            icon={<FileSvg />}
+            onClick={() => onExportMany?.(selectedRows)}
+          >
+            Export selected
+          </Menu.Item>
+          <Divider />
+          <Menu.Label>Undoable</Menu.Label>
+          <Menu.Item
+            icon={<DeleteSvg />}
+            color={"red"}
+            onClick={() => onDeleteMany?.(selectedRows)}
+          >
+            Delete records
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    );
 };

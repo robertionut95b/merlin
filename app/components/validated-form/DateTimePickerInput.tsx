@@ -1,5 +1,7 @@
+import { TextInput } from "@mantine/core";
 import type { DatePickerProps } from "@mantine/dates";
-import { DatePicker, TimeInput } from "@mantine/dates";
+import { DatePicker } from "@mantine/dates";
+import { getHours, getMinutes } from "date-fns";
 import { useField } from "remix-validated-form";
 
 type IDatetInputProps = DatePickerProps & {
@@ -8,14 +10,24 @@ type IDatetInputProps = DatePickerProps & {
 };
 
 export const DateTimePickerInput = (props: IDatetInputProps) => {
-  const { name } = props;
+  const { name, defaultValue, readOnly, disabled } = props;
   const { error, getInputProps } = useField(name);
 
   return (
     <div className="date-time-input flex flex-row gap-2">
       <DatePicker {...getInputProps({ id: name })} {...props} />
-      <TimeInput {...props} name={`${name}__time`} label="Time" />
-      <span className="text-xs text-red-600">{error}</span>
+      <TextInput
+        name={`${name}__time`}
+        defaultValue={
+          defaultValue
+            ? `${getHours(defaultValue)}:${getMinutes(defaultValue)}`
+            : undefined
+        }
+        label="Time"
+        readOnly={readOnly}
+        disabled={disabled}
+      />
+      {error && <span className="text-xs text-red-600">{error}</span>}
     </div>
   );
 };

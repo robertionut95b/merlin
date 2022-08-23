@@ -11,6 +11,7 @@ import type {
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { parseISO } from "date-fns";
 import { authorizationLoader } from "src/helpers/remix.rbac";
 import TheatreLegend from "~/components/configurator/legend/TheatreLegend";
 import TheatreMap from "~/components/configurator/theatre/TheatreMap";
@@ -84,6 +85,7 @@ const TicketPage = (): JSX.Element => {
           readOnly
           users={users}
           screenEvents={screenEvents}
+          time={ticket ? parseISO(String(ticket.time)) : undefined}
         />
       </div>
       {theatre && (

@@ -1,3 +1,4 @@
+import { setHours, setMinutes } from "date-fns";
 import dayjs from "dayjs";
 
 export const isValidDate = (date: Date): boolean => {
@@ -21,3 +22,16 @@ export default function combineTimeAndDate(time: Date, date: Date) {
 
   return dayjs(date).hour(hour).minute(minute);
 }
+
+export const parseStringTime = (time: string, referenceValue?: Date): Date => {
+  let newDate = new Date(referenceValue || new Date());
+  const parsedTime = time.split(":");
+  newDate = setHours(newDate, parseInt(parsedTime[0]));
+  newDate = setMinutes(newDate, parseInt(parsedTime[1]));
+
+  let offset = newDate.getTimezoneOffset();
+  offset = Math.abs(offset / 60);
+  newDate = setHours(newDate, newDate.getHours() + offset);
+
+  return newDate;
+};
